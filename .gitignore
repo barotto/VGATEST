@@ -1,0 +1,8 @@
+*.exe
+*.o
+*~
+*.fnt
+dosbox.conf
+/.cproject
+/.project
+/.settings/

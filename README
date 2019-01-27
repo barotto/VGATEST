@@ -1,0 +1,10 @@
+VGATEST
+
+Simple DOS program used to test VGA functionality in both text and graphics modes.
+
+It can be compiled with Open Watcom and needs dos4gw to run.
+
+To compile with Open Watcom:
+  * under DOS use wmake
+  * under Linux use build.sh
+
