@@ -74,7 +74,7 @@ void demoTextSplitscreen()
     text(2,15)(buf,c_white,c_black);
 
     int vpan = text.getVPanning();
-    snprintf(buf, 13, "vpan=%03d", vpan);
+    snprintf(buf, 13, "vpan=%02d", vpan);
     text(2,24)(buf,c_white,c_black);
 
     text.setColor(c_white);
@@ -116,7 +116,7 @@ void demoTextSplitscreen()
             if(hpan > 15) {
                 hpan = 15;
             }
-            snprintf(buf, 13, "hpan=%03d", hpan);
+            snprintf(buf, 13, "hpan=%02d", hpan);
             text(2,15)(buf,c_white,c_black);
             if(vpan < 0) {
                 vpan = 0;
@@ -124,7 +124,7 @@ void demoTextSplitscreen()
             if(vpan > (text.boxh()-1)) {
                 vpan = (text.boxh()-1);
             }
-            snprintf(buf, 13, "vpan=%03d", vpan);
+            snprintf(buf, 13, "vpan=%02d", vpan);
             text(2,24)(buf,c_white,c_black);
 
             text.setPanning(hpan,vpan);
