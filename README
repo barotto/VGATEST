@@ -1,6 +1,7 @@
 VGATEST
-
-Simple DOS program used to test VGA functionality in both text and graphics modes.
+================================================================================
+Simple DOS program used to test VGA functionality in both text and graphics
+modes.
 
 It can be compiled with Open Watcom and needs dos4gw to run.
 
@@ -8,3 +9,147 @@ To compile with Open Watcom:
   * under DOS use wmake
   * under Linux use build.sh
 
+To use the build.sh shell script, the WATCOM environment variable needs to be
+defined with the Open Watcom install directory.
+
+
+
+!!! Disclaimer !!!
+--------------------------------------------------------------------------------
+This program can and will damage the computer that you'll use it on and all of
+its attached peripherals. The author(s) cannot be held responsible for any
+damage occurred by the use of this program.
+Use at your own risk!
+
+
+
+Alphanumeric (A/N) tests
+--------------------------------------------------------------------------------
+
+Font Maps demo
+--------------
+This demo shows the double font map capability of the VGA that can be used to 
+display 512 different characters on screen.
+Font map 0 is the default BIOS map.
+Font map 1 is a 8 pixels wide BIOS map loaded with INT 10/AX=11--h
+Font maps 2-7 are custom maps.
+
+Keys:
+0 to 7 = change Map A's font.
+ESC    = exit
+
+
+Split & Pan demo
+----------------
+This demo shows the splits creen and panning features.
+
+Keys:
+ARROW UP    = increase vertical panning value
+ARROW DOWN  = decrease vertical panning value
+ARROW LEFT  = decrease horizontal panning value
+ARROW RIGHT = increase horizontal panning value
+PAGE UP     = decrease split screen scanline value
+PAGE DOWN   = inscrease split screen scanline value
+ESC         = exit
+
+
+Video modes available
+---------------------
+Name    Format   Box    Resolution
+0,1     40x25    8x8    320x200
+0*,1*   40x25    8x14   320x350
+0+,1+   40x25    9x16   320x400
+2,3     80x25    8x8    640x200
+2*,3*   80x25    8x14   640x350
+2+,3+   80x25    9x16   720x400
+7       80x25    9x14   720x350
+7+      80x25    9x16   720x400
+        80x43    8x8    640x350
+        80x50    9x8    720x400
+        80x28    9x14   720x400
+        80x30    8x16   640x480
+        80x34    8x14   640x480
+        80x60    8x8    640x480
+
+
+
+All Points Addressable (APA) tests
+--------------------------------------------------------------------------------
+
+Circles demo
+------------
+Shows a bunch of concentric circles that rapidly change their color. Useful to
+check the screen aspect ratio.
+
+Keys:
+ESC = exit
+
+
+Lines demo
+----------
+Shows two lines (green and red) that rotates in opposite directions. In video
+modes with only one available page the lines could be only partially drawn (it
+depends on how fast the CPU, bus, and VGA are).
+
+Keys:
+ESC = exit
+
+
+Palette demo
+------------
+Fills the screen with the color palette.
+
+Keys:
+ESC = exit
+
+
+Worms demo
+----------
+Draws a bunch of worms that crawl on the screen.
+
+Keys:
+ESC = exit
+
+
+Video modes available
+---------------------
+Name  Col.  Resolut.  Pages Mode  
+Dh    16    320x200   8     planar
+Eh    16    640x200   4     planar
+Fh    mono  640x350   2     planar
+10h   16    640x350   2     planar
+12h   16    640x480   1     planar
+13h   256   320x200   1     chain4
+      256   160x120   13    planar (multisync monitor only)
+Q     256   256x256   1     chain4
+      256   296x220   4     planar
+Y     256   320x200   4     planar
+X     256   320x240   3     planar
+      256   320x400   2     planar
+      256   360x270   2     planar
+      256   360x360   2     planar
+      256   360x480   1     planar
+      256   400x300   2     planar (multisync monitor only)
+      
+BEWARE: modes 160x120 and 400x300 require a multisync monitor and they can
+        damage very old VGA only 31.5 kHz monitors.
+
+
+
+LICENSE
+--------------------------------------------------------------------------------
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
+version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+
+
+
+Authors
+--------------------------------------------------------------------------------
+Copyright (C) 2019  Marco Bortolin
+Portions of code by Robert C. Pendleton and released in the public domain.
