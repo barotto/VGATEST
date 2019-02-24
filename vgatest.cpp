@@ -652,18 +652,19 @@ int main(int argc, char *argv[])
             askrow = (text.getRow()>askrow)?text.getRow():askrow;
 
             text(modesrow, 42)("Tweaked modes\n");
-            text("80x43 8x8  [1a]\n");
-            text("80x50 9x8  [1b]\n");
-            text("80x28 9x14 [1c]\n");
-            text("80x30 8x16 [1d]\n");
-            text("80x34 8x14 [1e]\n");
-            text("80x60 8x8  [1f]\n");
+            text("  80x43 8x8  [1a]\n");
+            text("  80x50 9x8  [1b]\n");
+            text("  80x28 9x14 [1c]\n");
+            text("° 80x30 8x16 [1d]\n");
+            text("° 80x34 8x14 [1e]\n");
+            text("° 80x60 8x8  [1f]\n");
             askrow = (text.getRow()>askrow)?text.getRow():askrow;
 
             text(askrow+1, 33);
             text("Which Mode?");
-
             text.getPos(promptrow, promptcol);
+
+            text(23,50)("° = multisync monitor req.");
 
             do {
                 int mode = getHexFromKeyb(promptrow, promptcol);

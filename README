@@ -67,10 +67,12 @@ Name    Format   Box    Resolution
         80x43    8x8    640x350
         80x50    9x8    720x400
         80x28    9x14   720x400
-        80x30    8x16   640x480
-        80x34    8x14   640x480
-        80x60    8x8    640x480
+        80x30    8x16   640x480 (multisync monitor only)
+        80x34    8x14   640x480 (multisync monitor only)
+        80x60    8x8    640x480 (multisync monitor only)
 
+BEWARE: modes 80x30, 80x34, and 80x60 require a multisync monitor and they may
+        damage very old VGA only 31.5 kHz monitors.
 
 
 All Points Addressable (APA) tests
