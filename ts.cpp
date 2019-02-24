@@ -86,6 +86,8 @@ TextScreen::TextScreen()
             m_error = e_modeNotSupported;
             break;
     }
+
+    m_overscanColor = 0;
 }
 
 TextScreen::~TextScreen()
@@ -130,6 +132,10 @@ void TextScreen::setMode(int16_t mode)
 
     if (m_error != e_none) {
         return;
+    }
+
+    if(m_crtc_addr == CRTC_ADDR_COL) {
+        ACR_OUT_COL(ACR_OVERSCAN, m_overscanColor);
     }
 
     erasePage(c_black, c_black);

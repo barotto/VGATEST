@@ -45,6 +45,7 @@ private:
     int m_boxh;
     int16_t m_crtc_addr;
     char* m_textPage;
+    uint8_t m_overscanColor;
 
     uint8_t m_error;
     char *m_modeName;           // printable name of the current mode
@@ -78,6 +79,9 @@ public:
     void setPanning(uint8_t hPan, uint8_t vPan);
     uint8_t getHPanning();
     uint8_t getVPanning();
+    void setOverscanColor(uint8_t palidx) {
+        m_overscanColor = palidx;
+    }
 
     int setRow(int row);
     int setCol(int col);

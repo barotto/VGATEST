@@ -57,6 +57,7 @@ GfxScreen::GfxScreen()
     m_colors = 0;
     m_crtc_addr = 0;
     m_isr1_addr = 0;
+    m_overscanColor = 0;
 
     m_putPixelFn = NULL;
     m_getPixelFn = NULL;
@@ -116,6 +117,10 @@ void GfxScreen::setMode(int16_t mode)
     }
     m_maxx = m_width - 1;
     m_maxy = m_height - 1;
+
+    if(m_crtc_addr == CRTC_ADDR_COL) {
+        ACR_OUT_COL(ACR_OVERSCAN, m_overscanColor);
+    }
 
     clear(color(c_black));
 }

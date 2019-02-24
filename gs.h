@@ -52,6 +52,7 @@ private:
     int16_t m_isr1_addr;
     uint8_t m_cval[256];
     uint8_t m_cmap[256];
+    uint8_t m_overscanColor;
 
     void (GfxScreen::*m_clearFn)(int row, int lines, uint8_t color);
     void (GfxScreen::*m_putPixelFn)(int16_t x, int16_t y, uint8_t color);
@@ -76,6 +77,10 @@ public:
 
     inline uint8_t color(uint8_t cname) const { return m_cval[m_cmap[cname]]; }
     inline uint8_t palidx(uint8_t color) const { return m_cval[color]; }
+
+    void setOverscanColor(uint8_t palidx) {
+        m_overscanColor = palidx;
+    }
 
     void setMode(int16_t newMode);
     void resetMode();

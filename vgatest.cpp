@@ -505,39 +505,54 @@ void demoPalette()
 //---------------------------------------------------
 // MAIN
 //---------------------------------------------------
+int getCharFromKeyb(const char* allowed, int promptrow, int promptcol)
+{
+    int c = ' ';
+    size_t len = strlen(allowed);
+    while(NULL == memchr(allowed, c, len)) {
+        text.moveCursor(promptrow, promptcol);
+        c = getche();
+        if(c == k_ESC) {
+            c = 'q';
+            break;
+        }
+        c = tolower(c);
+    }
+    return c;
+}
+
 int getHexFromKeyb(int row, int col)
 {
-    int mode1 = -1;
-    int mode2 = -1;
-    int mode = -1;
+    int hex1 = -1;
+    int hex2 = -1;
+    int hex = -1;
+    const char *hexch = "0123456789abcdef";
 
     // first digit
-    text.moveCursor(row, col);
-    mode1 = getche();
-    if(mode1 == k_ESC) {
+    hex1 = getCharFromKeyb(hexch, row, col);
+    if(hex1 == 'q') {
         return 0xFFFF;
     }
-    if(mode1 >= 'a') {
-        mode1 = (mode1-'a')+10;
+    if(hex1 >= 'a') {
+        hex1 = (hex1-'a')+10;
     } else {
-        mode1 -= '0';
+        hex1 -= '0';
     }
 
     // second digit
-    text.moveCursor(row, col+1);
-    mode2 = getche();
-    if(mode2 == k_ESC) {
+    hex2 = getCharFromKeyb(hexch, row, col+1);
+    if(hex2 == 'q') {
         return 0xFFFF;
     }
-    if(mode2 >= 'a') {
-        mode2 = (mode2-'a')+10;
+    if(hex2 >= 'a') {
+        hex2 = (hex2-'a')+10;
     } else {
-        mode2 -= '0';
+        hex2 -= '0';
     }
 
-    mode = mode1*16 + mode2;
+    hex = hex1*16 + hex2;
 
-    return mode;
+    return hex;
 }
 
 void putTitle()
@@ -558,7 +573,6 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    int mode = 0;
     char demo = 0;
     uint8_t a;
     int promptrow, promptcol;
@@ -570,22 +584,41 @@ int main(int argc, char *argv[])
         text(4,33);
         text("Text     [t]\n", DEFAULT_FG_COL);
         text("Graphics [g]\n");
+        text("Options  [o]\n");
         text(text.getRow()+1, 33);
         text("Which Mode?");
         text.getPos(promptrow, promptcol);
 
-        mode = ' ';
-        while(NULL == memchr("tTgGqQ", mode, 6)) {
-            text.moveCursor(promptrow, promptcol);
-            mode = getche();
-            if(mode == k_ESC) {
-                mode = 'q';
-                break;
-            }
-            mode = tolower(mode);
-        }
+        int mode = getCharFromKeyb("tTgGoO", promptrow, promptcol);
         if(mode == 'q') {
             break;
+        }
+
+        if(mode == 'o') {
+            text(promptrow+3,33)("Overscan color [o]\n");
+            text(text.getRow()+1, 33);
+            text("Which option?");
+            text.getPos(promptrow, promptcol);
+            int opt = getCharFromKeyb("oO", promptrow, promptcol);
+            if(opt == 'q') {
+                continue;
+            }
+            switch(opt) {
+                case 'o': {
+                    text(text.getRow()+1, 33);
+                    text("Palette index (hex)?");
+                    text.getPos(promptrow, promptcol);
+                    int pal = getHexFromKeyb(promptrow, promptcol);
+                    if(pal > 0xff) {
+                        continue;
+                    }
+                    text.setOverscanColor(pal);
+                    gfx.setOverscanColor(pal);
+                    break;
+                }
+                default:
+                    continue;
+            }
         }
 
         if(mode == 't') {
@@ -599,16 +632,7 @@ int main(int argc, char *argv[])
             text("Which Test?");
             text.getPos(promptrow, promptcol);
 
-            demo = ' ';
-            while(NULL == memchr("fFsS", demo, 4)) {
-                text.moveCursor(promptrow, promptcol);
-                demo = getche();
-                if(demo == k_ESC) {
-                    demo = 'q';
-                    break;
-                }
-                demo = tolower(demo);
-            }
+            int demo = getCharFromKeyb("fFsS", promptrow, promptcol);
             if(demo == 'q') {
                 continue;
             }
@@ -660,8 +684,9 @@ int main(int argc, char *argv[])
             }
 
             text.resetMode();
+        }
 
-        } else {
+        if(mode == 'g') {
 
             text.erasePage(DEFAULT_FG_COL, DEFAULT_BG_COL);
             putTitle();
@@ -674,16 +699,7 @@ int main(int argc, char *argv[])
             text("Which Test?");
             text.getPos(promptrow, promptcol);
 
-            demo = ' ';
-            while(NULL == memchr("cClLpPwW", demo, 8)) {
-                text.moveCursor(promptrow, promptcol);
-                demo = getche();
-                if(demo == k_ESC) {
-                    demo = 'q';
-                    break;
-                }
-                demo = tolower(demo);
-            }
+            int demo = getCharFromKeyb("cClLpPwW", promptrow, promptcol);
             if(demo == 'q') {
                 continue;
             }
