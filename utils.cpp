@@ -34,12 +34,23 @@ bool isVga()
     return (rg.h.al == 0x1a);
 }
 
-uint8_t far * getFont()
+uint8_t far * getFont(int size)
 {
     union REGPACK rg;
     memset(&rg, 0, sizeof(rg));
     rg.w.ax = 0x1130;
-    rg.h.bh = 0x03;
+    switch(size) {
+        default:
+        case 8:
+            rg.h.bh = 0x03;
+            break;
+        case 14:
+            rg.h.bh = 0x02;
+            break;
+        case 16:
+            rg.h.bh = 0x06;
+            break;
+    }
     intr(0x10, &rg);
     uint32_t seg = rg.w.es;
     uint32_t off = rg.w.bp;

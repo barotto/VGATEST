@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <stdarg.h>
 
 #include "common.h"
 #include "utils.h"
@@ -44,6 +45,7 @@ GfxScreen::GfxScreen()
     }
 
     m_fontAddr = NULL;
+    m_fontHeight = 14;
     m_activeOffset = 0;
     m_maxx = 0;
     m_maxy = 0;
@@ -106,7 +108,7 @@ void GfxScreen::setMode(int16_t mode)
         return;
     }
 
-    m_fontAddr = getFont();
+    m_fontAddr = getFont(m_fontHeight);
     m_activeOffset = VGA_ADDR;
     if(inp(MOR_READ) & 1) {
         m_crtc_addr = 0x3d4;
@@ -201,11 +203,16 @@ void GfxScreen::clear(uint8_t color)
     clear(0, m_height, color);
 }
 
-void GfxScreen::setActivePage(uint8_t page)
+uint8_t * GfxScreen::getPageOffset(uint8_t page)
 {
     int32_t offset = page % m_pages;
     offset *= m_pageSize / 4;
-    m_activeOffset = VGA_ADDR + offset;
+    return VGA_ADDR + offset;
+}
+
+void GfxScreen::setActivePage(uint8_t page)
+{
+    m_activeOffset = getPageOffset(page);
 }
 
 void GfxScreen::setVisiblePage(uint8_t page)
@@ -410,9 +417,9 @@ void GfxScreen::drawRectangle(int16_t x, int16_t y, int16_t width, int16_t heigh
 void GfxScreen::drawChar8(int16_t x, int16_t y, uint8_t color, char c)
 {
     // draws a character in 8-bit / 256-color modes
-    uint8_t far *font = m_fontAddr + (c * 8);
+    uint8_t far *font = m_fontAddr + (c * m_fontHeight);
 
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < m_fontHeight; i++) {
         uint8_t mask = *font;
         for (int j = 0; j < 8; j++) {
             if (mask & 0x80) {
@@ -434,7 +441,7 @@ void GfxScreen::drawChar4(int16_t x, int16_t y, uint8_t color, char c)
 
     uint8_t* vga_offset = m_activeOffset + (y * m_lineSize) + x / 8;
     uint8_t xbit = x & 7;
-    uint8_t far *font = m_fontAddr + c * 8;
+    uint8_t far *font = m_fontAddr + c * m_fontHeight;
 
     outp(GCR_ADDR, GCR_ROTATE);
     uint8_t rot = inp(GCR_DATA);
@@ -445,7 +452,7 @@ void GfxScreen::drawChar4(int16_t x, int16_t y, uint8_t color, char c)
     uint8_t leftmask = 0xff >> xbit;
     uint8_t rightmask = 0xff << (-xbit + 8);
     volatile uint8_t dummy;
-    for(uint8_t i=0; i<8; i++) {
+    for(uint8_t i=0; i<m_fontHeight; i++) {
         GCR_OUT(GCR_BITMASK, leftmask);
         dummy = *vga_offset;
         *vga_offset = *font;
@@ -457,6 +464,18 @@ void GfxScreen::drawChar4(int16_t x, int16_t y, uint8_t color, char c)
         font++;
         vga_offset += m_lineSize;
     }
+}
+
+void GfxScreen::printText(int16_t x, int16_t y, uint8_t color, const char *fmt, ...)
+{
+    char buf[200];
+
+    va_list ap;
+    va_start(ap, fmt);
+    vsnprintf(buf, 200, fmt, ap);
+    va_end(ap);
+
+    drawText(x, y, color, buf);
 }
 
 void GfxScreen::drawText8(int16_t x, int16_t y, uint8_t color, const char *string)

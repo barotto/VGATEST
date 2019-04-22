@@ -37,6 +37,7 @@ private:
     uint8_t m_error;          // the last error
     uint8_t m_origMode;       // the original video mode
     uint8_t far *m_fontAddr;  // address of the current font
+    uint8_t m_fontHeight;
     uint8_t *m_activeOffset;  // address of the active page
     int16_t m_maxx;           // maximum x coord
     int16_t m_maxy;           // maximum y coord
@@ -63,17 +64,19 @@ public:
     GfxScreen();
     ~GfxScreen();
 
-    inline int16_t error()    { return m_error; }
-    inline int16_t maxx()     { return m_maxx; }
-    inline int16_t maxy()     { return m_maxy; }
-    inline int16_t width()    { return m_width; }
-    inline int16_t height()   { return m_height; }
-    inline int16_t pages()    { return m_pages; }
-    inline int32_t lineSize() { return m_lineSize; }
-    inline int32_t pageSize() { return m_pageSize; }
-    inline bool  chained()    { return m_chained; }
-    inline char *modeName()   { return m_modeName; }
-    inline int16_t colors()   { return m_colors; }
+    inline int16_t error()    const { return m_error; }
+    inline int16_t maxx()     const { return m_maxx; }
+    inline int16_t maxy()     const { return m_maxy; }
+    inline int16_t width()    const { return m_width; }
+    inline int16_t height()   const { return m_height; }
+    inline int16_t pages()    const { return m_pages; }
+    inline int32_t lineSize() const { return m_lineSize; }
+    inline int32_t pageSize() const { return m_pageSize; }
+    inline bool  chained()    const { return m_chained; }
+    inline char *modeName()   const { return m_modeName; }
+    inline int16_t colors()   const { return m_colors; }
+    inline uint8_t fontHeight()    const { return m_fontHeight; }
+    inline uint8_t *activeOffset() const { return m_activeOffset; }
 
     inline uint8_t color(uint8_t cname) const { return m_cval[m_cmap[cname]]; }
     inline uint8_t palidx(uint8_t color) const { return m_cval[color]; }
@@ -88,6 +91,7 @@ public:
     void clear(uint8_t color);
     inline void clear(int row, int lines, uint8_t color) { (*this.*m_clearFn)(row, lines, color); }
 
+    uint8_t * getPageOffset(uint8_t page);
     void setActivePage(uint8_t page);
     void setVisiblePage(uint8_t page);
 
@@ -103,6 +107,7 @@ public:
     inline void drawText(int16_t x, int16_t y, uint8_t color, const char *string) {
         (*this.*m_drawTextFn)(x,y,color,string);
     }
+    void printText(int16_t x, int16_t y, uint8_t color, const char *fmt, ...);
 
     void setColor256(int16_t index, uint16_t r, uint16_t g, uint16_t b);
     void setPalette256(int16_t start, int16_t count, s_color *p);

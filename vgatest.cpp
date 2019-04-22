@@ -24,15 +24,59 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <time.h>
+#include <float.h>
 
 #include "common.h"
 #include "utils.h"
 #include "gs.h"
 #include "ts.h"
+#include "ztimer.h"
 
 GfxScreen gfx;
 TextScreen text;
 
+
+class FPS
+{
+public:
+    char buf[8];
+    char bkbuf[8];
+    clock_t t0, t1;
+    unsigned long frames;
+
+    FPS()
+    {
+        buf[0] = 0;
+        t0 = clock();
+        t1 = t0;
+        frames = 0;
+        memset(bkbuf, 219, 7);
+        bkbuf[7] = 0;
+    }
+
+    bool tick()
+    {
+        t1 = clock();
+        frames++;
+        clock_t elapsed = t1 - t0;
+        if(elapsed >= CLOCKS_PER_SEC) {
+            t0 = t1;
+            float fps = float(frames * CLOCKS_PER_SEC) / float(elapsed);
+            int len = snprintf(buf, 8, "%.2f", fps);
+            //int i = 0;
+            //for(; i<len && i<7; i++) {
+            //    bkbuf[i] = 219;
+            //}
+            //for(; i<7; i++) {
+            //    bkbuf[i] = 0;
+            //}
+            frames = 0;
+            return true;
+        }
+        return false;
+    }
+};
 
 //---------------------------------------------------
 //
@@ -239,6 +283,178 @@ void demoTextFontMaps()
 
 //---------------------------------------------------
 //
+// Graphics Mode demos
+//
+typedef void (*pt2MemBenchFn)(uint32_t);
+
+void video_write_32(uint32_t bytes)
+{
+    uint8_t *_offset = gfx.activeOffset();
+    uint32_t _size = bytes / 4;
+    ZTimerOn();
+    _asm {
+        mov edi, _offset
+        mov ecx, _size
+        cld
+        rep stosd
+    };
+    ZTimerOff();
+}
+
+void video_write_16(uint32_t bytes)
+{
+    uint8_t *_offset = gfx.activeOffset();
+    uint32_t _size = bytes / 2;
+    ZTimerOn();
+    _asm {
+        mov edi, _offset
+        mov ecx, _size
+        cld
+        rep stosw
+    };
+    ZTimerOff();
+}
+
+void video_write_8(uint32_t bytes)
+{
+    uint8_t *_offset = gfx.activeOffset();
+    uint32_t _size = bytes;
+    ZTimerOn();
+    _asm {
+        mov edi, _offset
+        mov ecx, _size
+        cld
+        rep stosb
+    };
+    ZTimerOff();
+}
+
+void video_read_32(uint32_t bytes)
+{
+    uint8_t *_offset = gfx.activeOffset();
+    uint32_t _size = bytes / 4;
+    ZTimerOn();
+    _asm {
+        mov esi, _offset
+        mov ecx, _size
+        cld
+        rep lodsd
+    };
+    ZTimerOff();
+}
+
+void video_read_16(uint32_t bytes)
+{
+    uint8_t *_offset = gfx.activeOffset();
+    uint32_t _size = bytes / 2;
+    ZTimerOn();
+    _asm {
+        mov esi, _offset
+        mov ecx, _size
+        cld
+        rep lodsw
+    };
+    ZTimerOff();
+}
+
+void video_read_8(uint32_t bytes)
+{
+    uint8_t *_offset = gfx.activeOffset();
+    uint32_t _size = bytes;
+    ZTimerOn();
+    _asm {
+        mov esi, _offset
+        mov ecx, _size
+        cld
+        rep lodsb
+    };
+    ZTimerOff();
+}
+
+
+void demoMemBenchWriteResults(double results[6])
+{
+    gfx.setActivePage(0);
+    gfx.clear(gfx.color(c_black));
+    gfx.drawText(8, 8, gfx.color(c_white), gfx.modeName());
+
+    const char *testStrings[6] = {
+        "32bit w: %s",
+        "16bit w: %s",
+        " 8bit w: %s",
+        "32bit r: %s",
+        "16bit r: %s",
+        " 8bit r: %s"
+    };
+
+    const char *resStrings[6] = {
+        "32bit w: %.2f MB/s",
+        "16bit w: %.2f MB/s",
+        " 8bit w: %.2f MB/s",
+        "32bit r: %.2f MB/s",
+        "16bit r: %.2f MB/s",
+        " 8bit r: %.2f MB/s"
+    };
+
+    int vpos = 8+gfx.fontHeight();
+    char buf[50] = "";
+    for(int r=0; r<6; r++) {
+        if(results[r] >= DBL_MAX) {
+            snprintf(buf, 50, testStrings[r], "ovr");
+        } else if(results[r]>.0){
+            snprintf(buf, 50, resStrings[r], results[r]);
+        } else {
+            snprintf(buf, 50, testStrings[r], results[r]<.0?"":"wait...");
+        }
+        gfx.drawText(8, vpos, gfx.color(r<3?c_lred:c_lgreen), buf);
+        vpos += gfx.fontHeight();
+    }
+}
+
+void demoMemBench()
+{
+    gfx.setVisiblePage(0);
+    gfx.setActivePage(0);
+    gfx.clear(gfx.color(c_black));
+    gfx.drawText(8, 8, gfx.color(c_white), gfx.modeName());
+
+    double results[6] = {0.f,-1.f,-1.f,-1.f,-1.f,-1.f};
+    demoMemBenchWriteResults(results);
+
+    pt2MemBenchFn functions[6] = {
+        &video_write_32,
+        &video_write_16,
+        &video_write_8,
+        &video_read_32,
+        &video_read_16,
+        &video_read_8
+    };
+
+    uint32_t size = 32000;
+    for(int f=0; f<6; f++) {
+        gfx.setActivePage(1);
+        ztimercount = 0;
+        functions[f](size);
+        if(ztimercount > 65535) {
+            // overflow
+            results[f] = DBL_MAX;
+        } else {
+            ztimercount -= ztimerref;
+            double us = double(ztimercount) / 0.8381;
+            results[f] = (double(size)/us) * 0.953674316;
+        }
+        if(f<5) {
+            results[f+1] = 0.f;
+        }
+        demoMemBenchWriteResults(results);
+    }
+    gfx.drawText(8, gfx.maxy()-gfx.fontHeight()-8, gfx.color(c_green), "press ESC");
+    getch();
+}
+
+
+//---------------------------------------------------
+//
 // Draw a bunch of worms that crawl around the screen.
 // Code by Robert C. Pendleton
 
@@ -295,6 +511,8 @@ void demoWorm()
             can[i].body[j].y = gfx.maxy() / 2;
         }
     }
+
+    FPS fps;
 
     while (!kbhit()) {
         for (i = 0; i < worms; i++) {
@@ -365,6 +583,11 @@ void demoWorm()
         }
 
         gfx.drawText(8, 8, gfx.color(c_white), gfx.modeName());
+
+        if(fps.tick()) {
+            gfx.drawText(8, gfx.maxy() - gfx.fontHeight() - 8, gfx.color(c_blue), fps.bkbuf);
+            gfx.drawText(8, gfx.maxy() - gfx.fontHeight() - 8, gfx.color(c_white), fps.buf);
+        }
     }
     getch();
 }
@@ -385,6 +608,8 @@ void demoLine()
 
     gfx.setVisiblePage(0);
 
+    FPS fps;
+
     while (!kbhit()) {
         x = 0;
         while (!kbhit() && x < gfx.maxx()) {
@@ -395,11 +620,14 @@ void demoLine()
             gfx.drawLine(gfx.maxx() - x, 0, x, gfx.maxy(), green);
 
             gfx.drawText(8, 8, gfx.color(c_white), gfx.modeName());
-            gfx.setVisiblePage(activePage);
+            gfx.drawText(8, gfx.maxy() - gfx.fontHeight() - 8, gfx.color(c_white), fps.buf);
 
+            gfx.setVisiblePage(activePage);
             activePage++;
 
             x++;
+
+            fps.tick();
         }
 
         y = 0;
@@ -411,11 +639,14 @@ void demoLine()
             gfx.drawLine(gfx.maxx(), gfx.maxy() - y, 0, y, green);
 
             gfx.drawText(8, 8, gfx.color(c_white), gfx.modeName());
-            gfx.setVisiblePage(activePage);
+            gfx.drawText(8, gfx.maxy() - gfx.fontHeight() - 8, gfx.color(c_white), fps.buf);
 
+            gfx.setVisiblePage(activePage);
             activePage++;
 
             y++;
+
+            fps.tick();
         }
     }
 
@@ -443,12 +674,17 @@ void demoCircle()
     int cy = gfx.height()/2 - 1;
 
     uint8_t color = 0;
+    FPS fps;
     while(!kbhit()) {
         for(int i=1; i<10; i++) {
             gfx.drawCircle(cx, cy, radius/i, color+i);
         }
         color++;
         gfx.drawText(8, 8, gfx.color(c_white), gfx.modeName());
+        if(fps.tick()) {
+            gfx.drawText(8, gfx.maxy() - gfx.fontHeight() - 8, gfx.color(c_black), fps.bkbuf);
+            gfx.drawText(8, gfx.maxy() - gfx.fontHeight() - 8, gfx.color(c_white), fps.buf);
+        }
     }
     getch();
 }
@@ -696,11 +932,12 @@ int main(int argc, char *argv[])
             text("Lines   [l]\n");
             text("Palette [p]\n");
             text("Worms   [w]\n");
+            text("Bench   [b]\n");
             text(text.getRow()+1, 33);
             text("Which Test?");
             text.getPos(promptrow, promptcol);
 
-            int demo = getCharFromKeyb("cClLpPwW", promptrow, promptcol);
+            int demo = getCharFromKeyb("cClLpPwWbB", promptrow, promptcol);
             if(demo == 'q') {
                 continue;
             }
@@ -758,6 +995,9 @@ int main(int argc, char *argv[])
                     break;
                 case 'p':
                     demoPalette();
+                    break;
+                case 'b':
+                    demoMemBench();
                     break;
             }
 

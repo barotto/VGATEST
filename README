@@ -113,6 +113,14 @@ Keys:
 ESC = exit
 
 
+Benchmark
+---------
+Performs a series of video memory access speed tests.
+
+Keys:
+ESC = exit
+
+
 Video modes available
 ---------------------
 Name  Col.  Resolut.  Pages Mode  

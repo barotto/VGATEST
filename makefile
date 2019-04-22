@@ -17,9 +17,9 @@ OPT     = -oneilr
 # header dependencies
 #
 
-HDRS    =  utils.h  gs.h  ts.h  common.h
+HDRS    =  utils.h  gs.h  ts.h  common.h  ztimer.h
 
-OBJS    =  vgatest.obj gs.obj ts.obj utils.obj
+OBJS    =  vgatest.obj gs.obj ts.obj utils.obj ztimer.obj
 
 all: vgatest.exe
 
@@ -30,6 +30,7 @@ tt.obj:      ts.cpp      $(HDRS)
 tg.obj:      gs.cpp      $(HDRS)
 vgatest.obj: vgatest.cpp $(HDRS)
 utils.obj:   utils.cpp   $(HDRS)
+ztimer.obj:  ztimer.cpp  $(HDRS)
 
 #
 # clean up 

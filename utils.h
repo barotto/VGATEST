@@ -30,7 +30,7 @@
 #define randr(lo,hi) (rand() % (hi + 1 - lo) + lo)
 
 bool isVga();
-uint8_t far * getFont();
+uint8_t far * getFont(int size);
 uint8_t getBIOSMode();
 void setBIOSMode(uint8_t mode);
 void setVGARegisters(uint16_t baseAddr, const int16_t *regs);
