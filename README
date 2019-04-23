@@ -3,14 +3,7 @@ VGATEST
 Simple DOS program used to test VGA functionality in both text and graphics
 modes.
 
-It can be compiled with Open Watcom and needs dos4gw to run.
-
-To compile with Open Watcom:
-  * under DOS use wmake
-  * under Linux use build.sh
-
-To use the build.sh shell script, the WATCOM environment variable needs to be
-defined with the Open Watcom install directory.
+It can be compiled with Open Watcom and needs the DOS/4GW extender.
 
 
 
@@ -73,6 +66,7 @@ Name    Format   Box    Resolution
 
 BEWARE: modes 80x30, 80x34, and 80x60 require a multisync monitor and they may
         damage very old VGA only 31.5 kHz monitors.
+
 
 
 All Points Addressable (APA) tests
