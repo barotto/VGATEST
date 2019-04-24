@@ -5,7 +5,7 @@ OPT     = -oneilr
 .cpp.obj:
 	wpp386 -bt=dos -mf -zc -fpc $(MACHINE) $(OPT) $(DEBUG) -zq -fo=$[&.obj $*.cpp
 
-OBJS = vgatest.obj gs.obj ts.obj utils.obj ztimer.obj demotext.obj demogfx.obj
+OBJS = vgatest.obj gs.obj ts.obj utils.obj ztimer.obj demotext.obj demogfx.obj bench.obj
 
 all: vgatest.exe
 

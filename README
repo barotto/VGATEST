@@ -46,6 +46,15 @@ PAGE DOWN   = inscrease split screen scanline value
 ESC         = exit
 
 
+Benchmark
+---------
+Performs a series of video memory access speed tests.
+
+Keys:
+ESC = exit
+r   = repeat tests
+
+
 Video modes available
 ---------------------
 Name    Format   Box    Resolution
@@ -113,6 +122,7 @@ Performs a series of video memory access speed tests.
 
 Keys:
 ESC = exit
+r   = repeat tests
 
 
 Video modes available

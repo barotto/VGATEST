@@ -26,6 +26,7 @@
 #include "vgatest.h"
 #include "demotext.h"
 #include "demogfx.h"
+#include "bench.h"
 
 
 GfxScreen gfx;
@@ -155,11 +156,12 @@ int main(int argc, char *argv[])
             text(4,33);
             text("Font Maps   [f]\n", DEFAULT_FG_COL);
             text("Split & Pan [s]\n");
+            text("Benchmark   [b]\n");
             text(text.getRow()+1, 33);
             text("Which Test?");
             text.getPos(promptrow, promptcol);
 
-            int demo = getCharFromKeyb("fFsS", promptrow, promptcol);
+            int demo = getCharFromKeyb("fFsSbB", promptrow, promptcol);
             if(demo == 'q') {
                 continue;
             }
@@ -209,6 +211,9 @@ int main(int argc, char *argv[])
                 case 's':
                     demoTextSplitscreen();
                     break;
+                case 'b':
+                    demoMemBench(false);
+                    break;
             }
 
             text.resetMode();
@@ -219,11 +224,11 @@ int main(int argc, char *argv[])
             text.erasePage(DEFAULT_FG_COL, DEFAULT_BG_COL);
             putTitle();
             text(4,33);
-            text("Circles [c]\n", DEFAULT_FG_COL);
-            text("Lines   [l]\n");
-            text("Palette [p]\n");
-            text("Worms   [w]\n");
-            text("Bench   [b]\n");
+            text("Circles   [c]\n", DEFAULT_FG_COL);
+            text("Lines     [l]\n");
+            text("Palette   [p]\n");
+            text("Worms     [w]\n");
+            text("Benchmark [b]\n");
             text(text.getRow()+1, 33);
             text("Which Test?");
             text.getPos(promptrow, promptcol);
@@ -288,7 +293,7 @@ int main(int argc, char *argv[])
                     demoPalette();
                     break;
                 case 'b':
-                    demoMemBench();
+                    demoMemBench(true);
                     break;
             }
 

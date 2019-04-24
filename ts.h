@@ -44,7 +44,7 @@ private:
     int m_boxw;
     int m_boxh;
     int16_t m_crtc_addr;
-    char* m_textPage;
+    char *m_textPage;
     uint8_t m_overscanColor;
 
     uint8_t m_error;
@@ -71,6 +71,7 @@ public:
     inline int boxw() const { return m_boxw; }
     inline int boxh() const { return m_boxh; }
     inline const char * modeName() const { return m_modeName; }
+    inline char *activeOffset() const { return m_textPage; }
 
     void setMode(int16_t newMode);
     void resetMode();
