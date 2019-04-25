@@ -133,6 +133,9 @@ enum videoModes {
     v_t400x300     = 0x1d,
 };
 
+#define ISR1_ADDR_MONO 0x3ba
+#define ISR1_ADDR_COL  0x3da
+
 #define MOR_ADDR  (0x3c2)           // misc. output register
 #define MOR_READ  (0x3cc)           // misc. output register
 

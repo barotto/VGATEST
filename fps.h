@@ -28,13 +28,17 @@
 class FPS
 {
 public:
+    float fps;
+private:
     char buf[8];
     char bkbuf[8];
     clock_t t0, t1;
     unsigned long frames;
 
+public:
     FPS()
     {
+        fps = .0f;
         buf[0] = 0;
         t0 = clock();
         t1 = t0;
@@ -50,19 +54,24 @@ public:
         clock_t elapsed = t1 - t0;
         if(elapsed >= CLOCKS_PER_SEC) {
             t0 = t1;
-            float fps = float(frames * CLOCKS_PER_SEC) / float(elapsed);
-            int len = snprintf(buf, 8, "%.2f", fps);
-            //int i = 0;
-            //for(; i<len && i<7; i++) {
-            //    bkbuf[i] = 219;
-            //}
-            //for(; i<7; i++) {
-            //    bkbuf[i] = 0;
-            //}
+            fps = float(frames * CLOCKS_PER_SEC) / float(elapsed);
             frames = 0;
             return true;
         }
         return false;
+    }
+
+    inline const char *resultStr()
+    {
+        if(frames == 0) {
+            snprintf(buf, 8, "%.2f", fps);
+        }
+        return buf;
+    }
+
+    inline const char *backStr() const
+    {
+        return bkbuf;
     }
 };
 

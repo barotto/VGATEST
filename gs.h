@@ -60,6 +60,8 @@ private:
     int16_t (GfxScreen::*m_getPixelFn)(int16_t x, int16_t y);
     void (GfxScreen::*m_drawTextFn)(int16_t x, int16_t y, uint8_t color, const char *string);
 
+    int32_t getPageOffset(uint8_t page);
+
 public:
     GfxScreen();
     ~GfxScreen();
@@ -91,7 +93,6 @@ public:
     void clear(uint8_t color);
     inline void clear(int row, int lines, uint8_t color) { (*this.*m_clearFn)(row, lines, color); }
 
-    uint8_t * getPageOffset(uint8_t page);
     void setActivePage(uint8_t page);
     void setVisiblePage(uint8_t page);
 

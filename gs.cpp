@@ -111,11 +111,11 @@ void GfxScreen::setMode(int16_t mode)
     m_fontAddr = getFont(m_fontHeight);
     m_activeOffset = VGA_ADDR;
     if(inp(MOR_READ) & 1) {
-        m_crtc_addr = 0x3d4;
-        m_isr1_addr = 0x3da;
+        m_crtc_addr = CRTC_ADDR_COL;
+        m_isr1_addr = ISR1_ADDR_COL;
     } else {
-        m_crtc_addr = 0x3b4;
-        m_isr1_addr = 0x3ba;
+        m_crtc_addr = CRTC_ADDR_MONO;
+        m_isr1_addr = ISR1_ADDR_MONO;
     }
     m_maxx = m_width - 1;
     m_maxy = m_height - 1;
@@ -203,16 +203,14 @@ void GfxScreen::clear(uint8_t color)
     clear(0, m_height, color);
 }
 
-uint8_t * GfxScreen::getPageOffset(uint8_t page)
+int32_t GfxScreen::getPageOffset(uint8_t page)
 {
-    int32_t offset = page % m_pages;
-    offset *= m_pageSize / 4;
-    return VGA_ADDR + offset;
+    return (page % m_pages) * (m_pageSize / 4);
 }
 
 void GfxScreen::setActivePage(uint8_t page)
 {
-    m_activeOffset = getPageOffset(page);
+    m_activeOffset = VGA_ADDR + getPageOffset(page);
 }
 
 void GfxScreen::setVisiblePage(uint8_t page)
@@ -222,8 +220,7 @@ void GfxScreen::setVisiblePage(uint8_t page)
         return;
     }
 
-    int32_t offset = page % m_pages;
-    offset *= m_pageSize / 4;
+    int32_t offset = getPageOffset(page);
 
     // wait for display disable
     while(inp(m_isr1_addr) & 0x01);

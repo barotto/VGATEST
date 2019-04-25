@@ -13,8 +13,5 @@ vgatest.exe : $(OBJS)
 	wcl386 -k128k -l=dos4g -mf $(DEBUG) $(OBJS)
 
 clean:
-	-rm *.bak
 	-rm *.obj
-	-rm *.exe
-	-rm err
-	-rm j
+	-rm vgatest.exe

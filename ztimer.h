@@ -1,9 +1,13 @@
 /*
  * Porting of The precision Zen timer by Michael Abrash
+ *
+ * See Michael Abrash's Graphics Programming Black Book, Chapter 3
  */
 
-extern uint32_t ztimercount; // if > 2^16-1 then overflow
+extern uint32_t ztimercount; // if > 2^16-1 then overflow happened (time elapsed > 53ms)
 extern uint16_t ztimerref;
+
+double zTimeToUs();
 
 #define DELAY "db 0xeb,0,0xeb,0,0xeb,0" // 3 x jmp $+2
 

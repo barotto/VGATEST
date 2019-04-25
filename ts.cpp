@@ -54,6 +54,7 @@ TextScreen::TextScreen()
             m_boxw = 9;
             m_boxh = 16;
             m_crtc_addr = CRTC_ADDR_COL;
+            m_isr1_addr = ISR1_ADDR_COL;
             m_textPage = ((char *)0xb8000);
             break;
         case 2:
@@ -67,6 +68,7 @@ TextScreen::TextScreen()
             m_boxw = 9;
             m_boxh = 16;
             m_crtc_addr = CRTC_ADDR_COL;
+            m_isr1_addr = ISR1_ADDR_COL;
             m_textPage = ((char *)0xb8000);
             break;
         case 7:
@@ -79,6 +81,7 @@ TextScreen::TextScreen()
             m_boxw = 9;
             m_boxh = 16;
             m_crtc_addr = CRTC_ADDR_MONO;
+            m_isr1_addr = ISR1_ADDR_MONO;
             m_textPage = ((char *)0xb0000);
             break;
         default:
@@ -87,6 +90,7 @@ TextScreen::TextScreen()
             break;
     }
 
+    m_activeOffset = m_textPage;
     m_overscanColor = 0;
 }
 
@@ -139,6 +143,33 @@ void TextScreen::setMode(int16_t mode)
     }
 
     erasePage(c_black, c_black);
+}
+
+int32_t TextScreen::getPageOffset(uint8_t page)
+{
+    return (page % pageCount()) * pageSize();
+}
+
+void TextScreen::setActivePage(uint8_t page)
+{
+    m_activeOffset = m_textPage + getPageOffset(page);
+}
+
+void TextScreen::setVisiblePage(uint8_t page)
+{
+    int32_t offset = getPageOffset(page);
+
+    // wait for display disable
+    while(inp(m_isr1_addr) & 0x01);
+
+    // set start address
+    outp(m_crtc_addr, 0x0c);
+    outp(m_crtc_addr+1, (offset & 0xff00) >> 8);
+    outp(m_crtc_addr, 0x0d);
+    outp(m_crtc_addr+1, offset &0x00ff);
+
+    // wait for vertical retrace
+    while(!(inp(m_isr1_addr) & 0x08));
 }
 
 void TextScreen::resetMode()
@@ -252,7 +283,7 @@ void TextScreen::moveCursor(int row, int col, uint8_t fg, uint8_t bg)
 
     int386(0x10, &rg, &rg);
 
-    *(m_textPage + ((row * m_cols) << 1) + (col << 1) + 1) = mkTextColor(fg, bg);
+    *(m_activeOffset + ((row * m_cols) << 1) + (col << 1) + 1) = mkTextColor(fg, bg);
 
     m_curFgColor = fg;
     m_curBgColor = bg;
@@ -266,7 +297,7 @@ void TextScreen::erasePage()
 void TextScreen::erasePage(uint8_t fg, uint8_t bg)
 {
     uint8_t color = mkTextColor(fg, bg);
-    char *ch = m_textPage;
+    char *ch = m_activeOffset;
 
     for (int i = 0; i < (m_rows * m_cols); i++) {
         *ch++ = ' ';
@@ -312,7 +343,7 @@ void TextScreen::write(int row, int col, const char *text, uint8_t fg, uint8_t b
     uint8_t color = mkTextColor(fg, bg);
     char t = *text++;
     while(t) {
-        char *ch = m_textPage + ((m_curRow * m_cols) << 1) + (m_curCol << 1);
+        char *ch = m_activeOffset + ((m_curRow * m_cols) << 1) + (m_curCol << 1);
         if(t == '\n') {
             m_curRow = (m_curRow + 1) % m_rows;
             m_curCol = m_prevCol;
@@ -554,13 +585,16 @@ void TextScreen::setMode(int bios, int cols, int rows, int boxw, int boxh)
     switch(bios) {
         case 7:
             m_crtc_addr = CRTC_ADDR_MONO;
+            m_isr1_addr = ISR1_ADDR_MONO;
             m_textPage = ((char *)0xb0000);
             break;
         default:
             m_crtc_addr = CRTC_ADDR_COL;
+            m_isr1_addr = ISR1_ADDR_COL;
             m_textPage = ((char *)0xb8000);
             break;
     }
+    m_activeOffset = m_textPage;
 }
 
 void TextScreen::setMode_b40x25_9x16_01h()
@@ -631,6 +665,7 @@ void TextScreen::setMode_640x480(int boxh)
     setCustomFonts(2, boxh);
 
     m_textPage = ((char *)0xb8000);
+    m_activeOffset = m_textPage;
     m_cols = 80;
     m_rows = textlines;
     m_width = 640;
@@ -639,6 +674,7 @@ void TextScreen::setMode_640x480(int boxh)
     m_boxw = 8;
     m_boxh = boxh;
     m_crtc_addr = CRTC_ADDR_COL;
+    m_isr1_addr = ISR1_ADDR_COL;
 
     static char buf[81];
     snprintf(buf, 81, "80x%d 8x%d 640x480", textlines, boxh);

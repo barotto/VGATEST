@@ -23,97 +23,197 @@
 #include <conio.h>
 #include <stdio.h>
 #include <float.h>
+#include <math.h>
 
 #include "vgatest.h"
 #include "ztimer.h"
 #include "fps.h"
 
-typedef void (*pt2MemBenchFn)(uint32_t, uint8_t*);
-
-void mem_write_32(uint32_t _bytes, uint8_t *_offset)
+class BenchRes
 {
-    _bytes = _bytes / 4;
+public:
+    bool running;
+    double bandwidth;
+    double fps;
+
+    BenchRes() :
+        running(true), bandwidth(.0), fps(.0) {}
+    BenchRes(double _bw, double _fps) :
+        running(false), bandwidth(_bw), fps(_fps) {}
+};
+
+typedef BenchRes(*pt2MemBenchFn)(uint32_t, uint32_t, uint8_t*);
+
+double toMBps(uint32_t bytes, double us)
+{
+    if(isnan(us) || us == 0.0) {
+        return NAN;
+    } else {
+        return (double(bytes) / us) * 0.953674316;
+    }
+}
+
+BenchRes mem_write_32(uint32_t bwbytes, uint32_t pagebytes, uint8_t *memoff)
+{
+    uint32_t rept = bwbytes / 4;
     ZTimerOn();
     _asm {
-        mov edi, _offset
-        mov ecx, _bytes
+        mov edi, memoff
+        mov ecx, rept
         cld
         rep stosd
     };
     ZTimerOff();
+
+    rept = pagebytes / 4;
+    FPS fps;
+    while(!fps.tick()) {
+        _asm {
+            mov edi, memoff
+            mov ecx, rept
+            cld
+            rep stosd
+        };
+    }
+
+    return BenchRes(toMBps(bwbytes, zTimeToUs()), fps.fps);
 }
 
-void mem_write_16(uint32_t _bytes, uint8_t *_offset)
+BenchRes mem_write_16(uint32_t bwbytes, uint32_t pagebytes, uint8_t *memoff)
 {
-    _bytes = _bytes / 2;
+    uint32_t rept = bwbytes / 2;
     ZTimerOn();
     _asm {
-        mov edi, _offset
-        mov ecx, _bytes
+        mov edi, memoff
+        mov ecx, rept
         cld
         rep stosw
     };
     ZTimerOff();
+
+    rept = pagebytes / 2;
+    FPS fps;
+    while(!fps.tick()) {
+        _asm {
+            mov edi, memoff
+            mov ecx, rept
+            cld
+            rep stosw
+        };
+    }
+
+    return BenchRes(toMBps(bwbytes, zTimeToUs()), fps.fps);
 }
 
-void mem_write_8(uint32_t _bytes, uint8_t *_offset)
+BenchRes mem_write_8(uint32_t bwbytes, uint32_t pagebytes, uint8_t *memoff)
 {
     ZTimerOn();
     _asm {
-        mov edi, _offset
-        mov ecx, _bytes
+        mov edi, memoff
+        mov ecx, bwbytes
         cld
         rep stosb
     };
     ZTimerOff();
+
+    FPS fps;
+    while(!fps.tick()) {
+        _asm {
+            mov edi, memoff
+            mov ecx, pagebytes
+            cld
+            rep stosb
+        };
+    }
+
+    return BenchRes(toMBps(bwbytes, zTimeToUs()), fps.fps);
 }
 
-void mem_read_32(uint32_t _bytes, uint8_t *_offset)
+BenchRes mem_read_32(uint32_t bwbytes, uint32_t pagebytes, uint8_t *memoff)
 {
-    _bytes = _bytes / 4;
+    uint32_t rept = bwbytes / 4;
     ZTimerOn();
     _asm {
-        mov esi, _offset
-        mov ecx, _bytes
+        mov esi, memoff
+        mov ecx, rept
         cld
         rep lodsd
     };
     ZTimerOff();
+
+    rept = pagebytes / 4;
+    FPS fps;
+    while(!fps.tick()) {
+        _asm {
+            mov esi, memoff
+            mov ecx, rept
+            cld
+            rep lodsd
+        };
+    }
+
+    return BenchRes(toMBps(bwbytes, zTimeToUs()), fps.fps);
 }
 
-void mem_read_16(uint32_t _bytes, uint8_t *_offset)
+BenchRes mem_read_16(uint32_t bwbytes, uint32_t pagebytes, uint8_t *memoff)
 {
-    _bytes = _bytes / 2;
+    uint32_t rept = bwbytes / 2;
     ZTimerOn();
     _asm {
-        mov esi, _offset
-        mov ecx, _bytes
+        mov esi, memoff
+        mov ecx, rept
         cld
         rep lodsw
     };
     ZTimerOff();
+
+    rept = pagebytes / 2;
+    FPS fps;
+    while(!fps.tick()) {
+        _asm {
+            mov edi, memoff
+            mov ecx, rept
+            cld
+            rep lodsw
+        };
+    }
+
+    return BenchRes(toMBps(bwbytes, zTimeToUs()), fps.fps);
 }
 
-void mem_read_8(uint32_t _bytes, uint8_t *_offset)
+BenchRes mem_read_8(uint32_t bwbytes, uint32_t pagebytes, uint8_t *memoff)
 {
     ZTimerOn();
     _asm {
-        mov esi, _offset
-        mov ecx, _bytes
+        mov esi, memoff
+        mov ecx, bwbytes
         cld
         rep lodsb
     };
     ZTimerOff();
+
+    FPS fps;
+    while(!fps.tick()) {
+        _asm {
+            mov edi, memoff
+            mov ecx, pagebytes
+            cld
+            rep lodsb
+        };
+    }
+
+    return BenchRes(toMBps(bwbytes, zTimeToUs()), fps.fps);
 }
 
 
-void demoMemBenchWriteResults(double results[6], bool gfxmode)
+void demoMemBenchWriteResults(BenchRes results[6], bool gfxmode)
 {
     if(gfxmode) {
         gfx.setActivePage(0);
         gfx.clear(gfx.color(c_black));
         gfx.drawText(8, 8, gfx.color(c_white), gfx.modeName());
     } else {
+        text.setActivePage(0);
         text.erasePage(c_black, c_black);
         text(1,1)(text.modeName(), c_lgray);
     }
@@ -128,12 +228,12 @@ void demoMemBenchWriteResults(double results[6], bool gfxmode)
     };
 
     const char *resStrings[6] = {
-        "32bit w: %.2f MB/s",
-        "16bit w: %.2f MB/s",
-        " 8bit w: %.2f MB/s",
-        "32bit r: %.2f MB/s",
-        "16bit r: %.2f MB/s",
-        " 8bit r: %.2f MB/s"
+        "32bit w: %.2f MB/s, %.2f fps",
+        "16bit w: %.2f MB/s, %.2f fps",
+        " 8bit w: %.2f MB/s, %.2f fps",
+        "32bit r: %.2f MB/s, %.2f fps",
+        "16bit r: %.2f MB/s, %.2f fps",
+        " 8bit r: %.2f MB/s, %.2f fps"
     };
 
     int vpos;
@@ -146,12 +246,12 @@ void demoMemBenchWriteResults(double results[6], bool gfxmode)
 
     char buf[50] = "";
     for(int r=0; r<6; r++) {
-        if(results[r] >= DBL_MAX) {
-            snprintf(buf, 50, testStrings[r], "ovr");
-        } else if(results[r]>.0){
-            snprintf(buf, 50, resStrings[r], results[r]);
+        if(results[r].running) {
+            snprintf(buf, 50, testStrings[r], "wait...");
+        } else if(isnan(results[r].bandwidth)) {
+            snprintf(buf, 50, testStrings[r], "NaN");
         } else {
-            snprintf(buf, 50, testStrings[r], results[r]<.0?"":"wait...");
+            snprintf(buf, 50, resStrings[r], results[r].bandwidth, results[r].fps);
         }
 
         if(gfxmode) {
@@ -165,7 +265,7 @@ void demoMemBenchWriteResults(double results[6], bool gfxmode)
 
 void demoMemBench(bool gfxmode)
 {
-    uint32_t size = 32000;
+    uint32_t pagebytes, bwbytes = 32000;
     uint8_t *offset;
 
 repeat:
@@ -173,14 +273,18 @@ repeat:
         gfx.setVisiblePage(0);
         gfx.setActivePage(1);
         offset = gfx.activeOffset();
+        pagebytes = gfx.pageSize();
     } else {
+        text.setVisiblePage(0);
+        text.setActivePage(1);
         offset = (uint8_t*)text.activeOffset();
+        pagebytes = text.pageSize();
     }
 
-    double results[6] = {0.f,-1.f,-1.f,-1.f,-1.f,-1.f};
+    BenchRes results[6];
     demoMemBenchWriteResults(results, gfxmode);
 
-    pt2MemBenchFn functions[6] = {
+    pt2MemBenchFn benchFunctions[6] = {
         &mem_write_32,
         &mem_write_16,
         &mem_write_8,
@@ -192,26 +296,17 @@ repeat:
     for(int f=0; f<6; f++) {
         if(gfxmode) {
             gfx.setActivePage(1);
+        } else {
+            text.setActivePage(1);
         }
         ztimercount = 0;
-        functions[f](size, offset);
-        if(ztimercount > 65535) {
-            // overflow
-            results[f] = DBL_MAX;
-        } else {
-            ztimercount -= ztimerref;
-            double us = double(ztimercount) / 0.8381;
-            results[f] = (double(size)/us) * 0.953674316;
-        }
-        if(f<5) {
-            results[f+1] = 0.f;
-        }
+        results[f] = benchFunctions[f](bwbytes, pagebytes, offset);
         demoMemBenchWriteResults(results, gfxmode);
     }
     if(gfxmode) {
-        gfx.drawText(8, gfx.maxy()-gfx.fontHeight()-8, gfx.color(c_green), "press ESC or R to repeat");
+        gfx.drawText(8, gfx.maxy()-gfx.fontHeight()-8, gfx.color(c_green), "ESC to exit, R to repeat");
     } else {
-        text(text.rows()-2,1)("press ESC or R to repeat", c_green);
+        text(text.rows()-2,1)("ESC to exit, R to repeat", c_green);
     }
     char ch = getch();
     if(ch == 114) {

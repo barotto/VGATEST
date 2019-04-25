@@ -159,8 +159,8 @@ void demoWorm()
         gfx.drawText(8, 8, gfx.color(c_white), gfx.modeName());
 
         if(fps.tick()) {
-            gfx.drawText(8, gfx.maxy() - gfx.fontHeight() - 8, gfx.color(c_blue), fps.bkbuf);
-            gfx.drawText(8, gfx.maxy() - gfx.fontHeight() - 8, gfx.color(c_white), fps.buf);
+            gfx.drawText(8, gfx.maxy() - gfx.fontHeight() - 8, gfx.color(c_blue), fps.backStr());
+            gfx.drawText(8, gfx.maxy() - gfx.fontHeight() - 8, gfx.color(c_white), fps.resultStr());
         }
     }
     getch();
@@ -194,7 +194,7 @@ void demoLine()
             gfx.drawLine(gfx.maxx() - x, 0, x, gfx.maxy(), green);
 
             gfx.drawText(8, 8, gfx.color(c_white), gfx.modeName());
-            gfx.drawText(8, gfx.maxy() - gfx.fontHeight() - 8, gfx.color(c_white), fps.buf);
+            gfx.drawText(8, gfx.maxy() - gfx.fontHeight() - 8, gfx.color(c_white), fps.resultStr());
 
             gfx.setVisiblePage(activePage);
             activePage++;
@@ -213,7 +213,7 @@ void demoLine()
             gfx.drawLine(gfx.maxx(), gfx.maxy() - y, 0, y, green);
 
             gfx.drawText(8, 8, gfx.color(c_white), gfx.modeName());
-            gfx.drawText(8, gfx.maxy() - gfx.fontHeight() - 8, gfx.color(c_white), fps.buf);
+            gfx.drawText(8, gfx.maxy() - gfx.fontHeight() - 8, gfx.color(c_white), fps.resultStr());
 
             gfx.setVisiblePage(activePage);
             activePage++;
@@ -256,8 +256,8 @@ void demoCircle()
         color++;
         gfx.drawText(8, 8, gfx.color(c_white), gfx.modeName());
         if(fps.tick()) {
-            gfx.drawText(8, gfx.maxy() - gfx.fontHeight() - 8, gfx.color(c_black), fps.bkbuf);
-            gfx.drawText(8, gfx.maxy() - gfx.fontHeight() - 8, gfx.color(c_white), fps.buf);
+            gfx.drawText(8, gfx.maxy() - gfx.fontHeight() - 8, gfx.color(c_black), fps.backStr());
+            gfx.drawText(8, gfx.maxy() - gfx.fontHeight() - 8, gfx.color(c_white), fps.resultStr());
         }
     }
     getch();
