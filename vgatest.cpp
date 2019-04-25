@@ -28,7 +28,7 @@
 #include "demogfx.h"
 #include "bench.h"
 
-#define VERSION "git"
+#define VERSION "1.0"
 
 GfxScreen gfx;
 TextScreen text;

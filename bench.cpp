@@ -171,7 +171,7 @@ BenchRes mem_read_16(uint32_t bwbytes, uint32_t pagebytes, uint8_t *memoff)
     FPS fps;
     while(!fps.tick()) {
         _asm {
-            mov edi, memoff
+            mov esi, memoff
             mov ecx, rept
             cld
             rep lodsw
@@ -195,7 +195,7 @@ BenchRes mem_read_8(uint32_t bwbytes, uint32_t pagebytes, uint8_t *memoff)
     FPS fps;
     while(!fps.tick()) {
         _asm {
-            mov edi, memoff
+            mov esi, memoff
             mov ecx, pagebytes
             cld
             rep lodsb
