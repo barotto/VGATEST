@@ -28,6 +28,7 @@
 #include "demogfx.h"
 #include "bench.h"
 
+#define VERSION "git"
 
 GfxScreen gfx;
 TextScreen text;
@@ -88,6 +89,8 @@ void putTitle()
     text(2,28)("-", c_dgray)("-", c_lgray)("-", c_white)
               (" VGA modes test ", c_white)
               ("-", c_white)("-", c_lgray)("-", c_dgray);
+
+    text(text.rows()-1, 0)("Version: " VERSION, c_dgray);
 }
 
 int main(int argc, char *argv[])
