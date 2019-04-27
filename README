@@ -49,7 +49,13 @@ ESC         = exit
 
 Benchmark
 ---------
-Performs a series of video memory access speed tests.
+Performs a series of video memory access speed tests. Two values are given:
+MB/s = the memory bandwidth of the video subsystem in megabytes per second;
+fps = how many times per second a single video page can be filled with a fixed
+character / attributes pair. This is an ideal condition and represents the
+maximum fill rate.
+Both values depend not only on the video card and bus speeds but also on the
+CPU performance.
 
 Keys:
 ESC = exit
@@ -119,7 +125,12 @@ ESC = exit
 
 Benchmark
 ---------
-Performs a series of video memory access speed tests.
+Performs a series of video memory access speed tests. Two values are given:
+MB/s = the memory bandwidth of the video subsystem in megabytes per second;
+fps = how many times per second a single video page can be filled with a fixed
+color value. This is an ideal condition and represents the maximum fill rate.
+Both values depend not only on the video card and bus speeds but also on the
+CPU performance.
 
 Keys:
 ESC = exit

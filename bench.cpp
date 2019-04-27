@@ -274,6 +274,9 @@ repeat:
         gfx.setActivePage(1);
         offset = gfx.activeOffset();
         pagebytes = gfx.pageSize();
+        if(!gfx.chained()) {
+            pagebytes /= 4;
+        }
     } else {
         text.setVisiblePage(0);
         text.setActivePage(1);
@@ -310,7 +313,7 @@ repeat:
     }
     char ch = getch();
     if(ch == 114) {
-        // a goto! the orror!
+        // a goto! the horror!
         goto repeat;
     }
 }

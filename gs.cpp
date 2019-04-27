@@ -205,6 +205,8 @@ void GfxScreen::clear(uint8_t color)
 
 int32_t GfxScreen::getPageOffset(uint8_t page)
 {
+    // only planar modes have more than 1 page
+    // so if current mode is chained (m_pageSize / 4) is wrong but irrelevant
     return (page % m_pages) * (m_pageSize / 4);
 }
 
