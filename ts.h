@@ -78,7 +78,7 @@ public:
     inline const char * modeName() const { return m_modeName; }
     inline char *activeOffset() const { return m_activeOffset; }
     inline int32_t pageSize() const { return m_cols*m_rows*2; }
-    inline uint8_t pageCount() const { return (32000 / pageSize()); }
+    inline uint8_t pageCount() const { return 1; }
 
     void setMode(int16_t newMode);
     void resetMode();
