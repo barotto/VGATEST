@@ -22,6 +22,7 @@
 
 #include <conio.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "vgatest.h"
 #include "fps.h"
@@ -309,4 +310,113 @@ void demoPalette()
 
     while(!kbhit()) {}
     getch();
+}
+
+
+//---------------------------------------------------
+//
+// Splits the screen in half
+//
+
+void demoGfxSpitscreen()
+{
+    gfx.setActivePage(0);
+    gfx.clear(0);
+    gfx.setVisiblePage(0);
+    
+    int16_t c = gfx.colors();
+    if(c <= 16) {
+        for(int i=0; i<c; i++) {
+            gfx.clear(gfx.height()/c * i, gfx.height()/c, gfx.palidx(i));
+        }
+    } else {
+        // 256 colors
+        int w = gfx.width()/16;
+        int h = gfx.height()/16;
+        for(int y=0; y<16; y++) {
+            for(int x=0; x<16; x++) {
+                if(gfx.chained()) {
+                    gfx.fillRect8chained(x*w, y*h, w, h, y*16+x);
+                } else {
+                    gfx.fillRect8(x*w, y*h, w, h, y*16+x);
+                }
+            }
+        }
+    }
+
+    gfx.drawRectangle(0, 0, gfx.width(), gfx.height(), gfx.color(c_white));
+    gfx.drawText(8, 8, gfx.color(c_white), gfx.modeName());
+    
+    int scanline = (gfx.scanlines() / 2) - 1;
+    
+    char buf[10];
+    char bkg[54] = { 219,219,219,219,0 };
+
+    const int line1 = 22, line2 = 34, line3 = 46;
+    const int col = 90;
+    
+    gfx.drawText(8, line1, gfx.color(c_white), " scanline=");
+    gfx.drawText(8, line2, gfx.color(c_white), "horiz.pan=");
+    gfx.drawText(8, line3, gfx.color(c_white), "startaddr=");
+    
+    gfx.drawText(col, line1, gfx.color(c_blue), bkg);
+    snprintf(buf, 10, "%03d", scanline);
+    gfx.drawText(col, line1, gfx.color(c_white), buf);
+    
+    gfx.setSplitScreen(scanline);
+    
+    int addr=0, hpan=0;
+    gfx.drawText(col, line2, gfx.color(c_blue), bkg);
+    gfx.drawText(col, line2, gfx.color(c_white), "00");
+    
+    gfx.drawText(col, line3, gfx.color(c_blue), bkg);
+    gfx.drawText(col, line3, gfx.color(c_white), "0000");
+    
+    int k = getch();
+    while(k != k_ESC) {
+        if(k == 0 || k == 224) {
+            switch(getch()) { // the real value
+                case k_PAGE_UP:     scanline--; break;
+                case k_PAGE_DOWN:   scanline++; break;
+                case k_UP_ARROW:    addr++; break;
+                case k_DOWN_ARROW:  addr--; break;
+                case k_LEFT_ARROW:  hpan--; break;
+                case k_RIGHT_ARROW: hpan++; break;
+                default:
+                    continue;
+            }
+            if(scanline < 0) {
+                scanline = 0;
+            }
+            if(scanline > gfx.scanlines()-1) {
+                scanline = gfx.scanlines()-1;
+            }
+            gfx.drawText(col, line1, gfx.color(c_blue), bkg);
+            snprintf(buf, 10, "%03d", scanline);
+            gfx.drawText(col, line1, gfx.color(c_white), buf);
+            gfx.setSplitScreen(scanline);
+            
+            if(hpan < 0) {
+                hpan = 0;
+            }
+            if(hpan > 15) {
+                hpan = 15;
+            }
+            gfx.drawText(col, line2, gfx.color(c_blue), bkg);
+            snprintf(buf, 13, "%02d", hpan);
+            gfx.drawText(col, line2, gfx.color(c_white), buf);
+            
+            gfx.setPanning(hpan);
+            
+            if(addr < 0) {
+                addr = 0;
+            }
+            gfx.drawText(col, line3, gfx.color(c_blue), bkg);
+            snprintf(buf, 13, "%04x", addr);
+            gfx.drawText(col, line3, gfx.color(c_white), buf);
+            
+            gfx.setStartAddress(addr);
+        }
+        k = getch();
+    }
 }

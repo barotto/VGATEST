@@ -51,6 +51,7 @@ GfxScreen::GfxScreen()
     m_maxy = 0;
     m_width = 0;
     m_height = 0;
+    m_scanlines = 0;
     m_pages = 0;
     m_lineSize = 0;
     m_pageSize = 0;
@@ -133,6 +134,7 @@ void GfxScreen::resetMode()
 
     m_width = 0;
     m_height = 0;
+    m_scanlines = 0;
     m_maxx = 0;
     m_maxy = 0;
     m_pages = 0;
@@ -228,10 +230,7 @@ void GfxScreen::setVisiblePage(uint8_t page)
     while(inp(m_isr1_addr) & 0x01);
 
     // set start address
-    outp(m_crtc_addr, 0x0c);
-    outp(m_crtc_addr+1, (offset & 0xff00) >> 8);
-    outp(m_crtc_addr, 0x0d);
-    outp(m_crtc_addr+1, offset &0x00ff);
+    setStartAddress(offset);
 
     // wait for vertical retrace
     while(!(inp(m_isr1_addr) & 0x08));
@@ -669,6 +668,27 @@ void GfxScreen::setPalette256(int16_t start, int16_t count, s_color *p)
     }
 }
 
+void GfxScreen::setSplitScreen(uint16_t scanline)
+{
+    if(scanline < m_scanlines) {
+        ::setSplitScreen(m_crtc_addr, scanline);
+    }
+}
+
+void GfxScreen::setPanning(uint8_t hPan)
+{
+    uint16_t isra = 0x03da;
+    if(m_crtc_addr == CRTC_ADDR_MONO) {
+        isra = 0x03ba;
+    }
+    ACR_OUT(isra, ACR_HPELPAN, hPan);
+}
+
+void GfxScreen::setStartAddress(uint16_t address)
+{
+    ::setStartAddress(m_crtc_addr, address);
+}
+
 void GfxScreen::vsync()
 {
     // wait until any previous retrace has ended
@@ -726,6 +746,7 @@ void GfxScreen::mode_b320x200_0Dh()
 
     m_width    = 320;
     m_height   = 200;
+    m_scanlines = 400;
     m_pages    = 8;
     m_lineSize = 40;
     m_chained  = 0;
@@ -749,6 +770,7 @@ void GfxScreen::mode_b640x200_0Eh()
 
     m_width    = 640;
     m_height   = 200;
+    m_scanlines = 400;
     m_pages    = 4;
     m_lineSize = 80;
     m_chained  = 0;
@@ -772,6 +794,7 @@ void GfxScreen::mode_b640x350_0Fh()
 
     m_width    = 640;
     m_height   = 350;
+    m_scanlines = 350;
     m_pages    = 2;
     m_lineSize = 80;
     m_chained  = 0;
@@ -819,6 +842,7 @@ void GfxScreen::mode_b640x350_10h()
 
     m_width    = 640;
     m_height   = 350;
+    m_scanlines = 350;
     m_pages    = 2;
     m_lineSize = 80;
     m_chained  = 0;
@@ -842,6 +866,7 @@ void GfxScreen::mode_b640x480_12h()
 
     m_width    = 640;
     m_height   = 480;
+    m_scanlines = 480;
     m_pages    = 1;
     m_lineSize = 80;
     m_chained  = 0;
@@ -865,6 +890,7 @@ void GfxScreen::mode_b320x200_13h()
 
     m_width    = 320;
     m_height   = 200;
+    m_scanlines = 400;
     m_pages    = 1;
     m_lineSize = 320;
     m_chained  = 1;
@@ -883,6 +909,7 @@ void GfxScreen::mode_t160x120()
 {
     m_width   = 160;
     m_height  = 120;
+    m_scanlines = 480;
     m_maxx    = 159;
     m_maxy    = 119;
     m_pages   = 13;
@@ -944,6 +971,7 @@ void GfxScreen::mode_t296x220()
 {
     m_width    = 296;
     m_height   = 220;
+    m_scanlines = 440;
     m_pages    = 4;
     m_lineSize = 74;
     m_pageSize = 65120;
@@ -1000,6 +1028,7 @@ void GfxScreen::mode_t256x256_Q()
 {
     m_width    = 256;
     m_height   = 256;
+    m_scanlines = 512;
     m_pages    = 1;
     m_lineSize = 256;
     m_chained  = 1;
@@ -1053,6 +1082,7 @@ void GfxScreen::mode_t320x200_Y()
 {
     m_width    = 320;
     m_height   = 200;
+    m_scanlines = 400;
     m_pages    = 4;
     m_lineSize = 80;
     m_pageSize = 64000;
@@ -1082,6 +1112,7 @@ void GfxScreen::mode_t320x240_X()
 {
     m_width    = 320;
     m_height   = 240;
+    m_scanlines = 480;
     m_pages    = 3;
     m_lineSize = 80;
     m_pageSize = 76800;
@@ -1124,6 +1155,7 @@ void GfxScreen::mode_t320x400()
 {
     m_width    = 320;
     m_height   = 400;
+    m_scanlines = 400;
     m_pages    = 2;
     m_lineSize = 80;
     m_pageSize = 128000;
@@ -1158,6 +1190,7 @@ void GfxScreen::mode_t360x270()
 {
     m_width    = 360;
     m_height   = 270;
+    m_scanlines = 540;
     m_pages    = 2;
     m_lineSize = 90;
     m_pageSize = 97200;
@@ -1211,6 +1244,7 @@ void GfxScreen::mode_t360x360()
 {
     m_width    = 360;
     m_height   = 360;
+    m_scanlines = 360;
     m_pages    = 2;
     m_lineSize = 90;
     m_pageSize = 129600;
@@ -1264,6 +1298,7 @@ void GfxScreen::mode_t360x480()
 {
     m_width    = 360;
     m_height   = 480;
+    m_scanlines = 480;
     m_pages    = 1;
     m_lineSize = 90;
     m_pageSize = 172800;
@@ -1314,6 +1349,7 @@ void GfxScreen::mode_t400x300()
 {
     m_width    = 400;
     m_height   = 300;
+    m_scanlines = 300;
     m_pages    = 2;
     m_lineSize = 100;
     m_pageSize = 120000;

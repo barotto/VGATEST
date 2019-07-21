@@ -43,6 +43,7 @@ private:
     int16_t m_maxy;           // maximum y coord
     int16_t m_width;          // the width in pixels
     int16_t m_height;         // the height in pixels
+    int16_t m_scanlines;      // number of visible scanlines
     int16_t m_pages;          // the number of graphic pages
     int32_t m_lineSize;       // offset to next scan line
     int32_t m_pageSize;       // offset to a page
@@ -71,6 +72,7 @@ public:
     inline int16_t maxy()     const { return m_maxy; }
     inline int16_t width()    const { return m_width; }
     inline int16_t height()   const { return m_height; }
+    inline int16_t scanlines()const { return m_scanlines; }
     inline int16_t pages()    const { return m_pages; }
     inline int32_t lineSize() const { return m_lineSize; }
     inline int32_t pageSize() const { return m_pageSize; }
@@ -113,6 +115,9 @@ public:
     void setColor256(int16_t index, uint16_t r, uint16_t g, uint16_t b);
     void setPalette256(int16_t start, int16_t count, s_color *p);
 
+    void setSplitScreen(uint16_t scanline);
+    void setPanning(uint8_t hpan);
+    void setStartAddress(uint16_t addr);
     void vsync();
 
 private:

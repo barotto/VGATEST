@@ -107,3 +107,9 @@ void setSplitScreen(uint16_t baseAddr, uint16_t scanline)
     msl |= (scanline>>3) & 0x40;
     CRTC_OUT(baseAddr, CRTC_MAX_SCANLINE, msl);
 }
+
+void setStartAddress(uint16_t baseAddr, uint16_t address)
+{
+    CRTC_OUT(baseAddr, CRTC_STARTADDR_HI, (address & 0xff00) >> 8);
+    CRTC_OUT(baseAddr, CRTC_STARTADDR_LO, (address & 0x00ff));
+}

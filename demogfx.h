@@ -26,5 +26,6 @@ void demoWorm();
 void demoLine();
 void demoCircle();
 void demoPalette();
+void demoGfxSpitscreen();
 
 #endif

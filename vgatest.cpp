@@ -28,7 +28,7 @@
 #include "demogfx.h"
 #include "bench.h"
 
-#define VERSION "1.0"
+#define VERSION "git"
 
 GfxScreen gfx;
 TextScreen text;
@@ -227,16 +227,17 @@ int main(int argc, char *argv[])
             text.erasePage(DEFAULT_FG_COL, DEFAULT_BG_COL);
             putTitle();
             text(4,33);
-            text("Circles   [c]\n", DEFAULT_FG_COL);
-            text("Lines     [l]\n");
-            text("Palette   [p]\n");
-            text("Worms     [w]\n");
-            text("Benchmark [b]\n");
+            text("Circles     [c]\n", DEFAULT_FG_COL);
+            text("Lines       [l]\n");
+            text("Palette     [p]\n");
+            text("Worms       [w]\n");
+            text("Split & Pan [s]\n");
+            text("Benchmark   [b]\n");
             text(text.getRow()+1, 33);
             text("Which Test?");
             text.getPos(promptrow, promptcol);
 
-            int demo = getCharFromKeyb("cClLpPwWbB", promptrow, promptcol);
+            int demo = getCharFromKeyb("cClLpPwWsSbB", promptrow, promptcol);
             if(demo == 'q') {
                 continue;
             }
@@ -294,6 +295,9 @@ int main(int argc, char *argv[])
                     break;
                 case 'p':
                     demoPalette();
+                    break;
+                case 's':
+                    demoGfxSpitscreen();
                     break;
                 case 'b':
                     demoMemBench(true);

@@ -35,7 +35,7 @@ ESC    = exit
 
 Split & Pan demo
 ----------------
-This demo shows the splits creen and panning features.
+This demo shows the split screen and panning features.
 
 Keys:
 ARROW UP    = increase vertical panning value
@@ -43,7 +43,7 @@ ARROW DOWN  = decrease vertical panning value
 ARROW LEFT  = decrease horizontal panning value
 ARROW RIGHT = increase horizontal panning value
 PAGE UP     = decrease split screen scanline value
-PAGE DOWN   = inscrease split screen scanline value
+PAGE DOWN   = increase split screen scanline value
 ESC         = exit
 
 
@@ -121,6 +121,20 @@ Draws a bunch of worms that crawl on the screen.
 
 Keys:
 ESC = exit
+
+
+Split & Pan demo
+----------------
+This demo shows the split screen and panning features.
+
+Keys:
+ARROW UP    = increase start address value
+ARROW DOWN  = decrease start address value
+ARROW LEFT  = decrease horizontal panning value
+ARROW RIGHT = increase horizontal panning value
+PAGE UP     = decrease split screen scanline value
+PAGE DOWN   = increase split screen scanline value
+ESC         = exit
 
 
 Benchmark

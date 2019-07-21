@@ -36,6 +36,7 @@ void setBIOSMode(uint8_t mode);
 void setVGARegisters(uint16_t baseAddr, const int16_t *regs);
 void unlockCRTC(int16_t baseAddr);
 void setSplitScreen(uint16_t baseAddr, uint16_t scanline);
+void setStartAddress(uint16_t baseAddr, uint16_t startAddr);
 
 void fillLong(void *addr, uint32_t value, int32_t count);
 #pragma aux fillLong = \
