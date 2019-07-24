@@ -353,7 +353,7 @@ void demoGfxSpitscreen()
     char bkg[54] = { 219,219,219,219,0 };
 
     const int line1 = 22, line2 = 34, line3 = 46;
-    const int col = 90;
+    const int col = 88;
     
     gfx.drawText(8, line1, gfx.color(c_white), " scanline=");
     gfx.drawText(8, line2, gfx.color(c_white), "horiz.pan=");
@@ -399,8 +399,8 @@ void demoGfxSpitscreen()
             if(hpan < 0) {
                 hpan = 0;
             }
-            if(hpan > 15) {
-                hpan = 15;
+            if(hpan > gfx.width()) {
+                hpan = gfx.width();
             }
             gfx.drawText(col, line2, gfx.color(c_blue), bkg);
             snprintf(buf, 13, "%02d", hpan);
