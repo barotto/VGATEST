@@ -134,6 +134,7 @@ ARROW LEFT  = decrease horizontal panning value
 ARROW RIGHT = increase horizontal panning value
 PAGE UP     = decrease split screen scanline value
 PAGE DOWN   = increase split screen scanline value
+M           = change Pixel Panning Mode value
 ESC         = exit
 
 

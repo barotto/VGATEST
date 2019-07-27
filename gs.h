@@ -117,6 +117,7 @@ public:
 
     void setSplitScreen(uint16_t scanline);
     void setPanning(uint8_t hpan);
+    void setPanningMode(bool mode);
     void setStartAddress(uint16_t addr);
     void vsync();
 

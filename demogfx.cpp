@@ -318,6 +318,72 @@ void demoPalette()
 // Splits the screen in half
 //
 
+void demoGfxSpitscreen_setScanline(int &scanline, int txtcol, int txtline)
+{
+    char buf[4];
+    char bkg[4] = { 219,219,219,0 };
+    
+    if(scanline < 0) {
+        scanline = 0;
+    }
+    if(scanline > gfx.scanlines()-1) {
+        scanline = gfx.scanlines()-1;
+    }
+    
+    gfx.drawText(txtcol, txtline, gfx.color(c_blue), bkg);
+    snprintf(buf, 4, "%03d", scanline);
+    gfx.drawText(txtcol, txtline, gfx.color(c_white), buf);
+    
+    gfx.setSplitScreen(scanline);
+    
+}
+
+void demoGfxSpitscreen_setHPan(int &hpan, int txtcol, int txtline)
+{
+    char buf[3];
+    char bkg[3] = { 219,219,0 };
+
+    if(hpan < 0) {
+        hpan = 0;
+    }
+    if(hpan > gfx.width()) {
+        hpan = gfx.width();
+    }
+    
+    gfx.drawText(txtcol, txtline, gfx.color(c_blue), bkg);
+    snprintf(buf, 3, "%02d", hpan);
+    gfx.drawText(txtcol, txtline, gfx.color(c_white), buf);
+    
+    gfx.setPanning(hpan);
+}
+
+void demoGfxSpitscreen_setStartAddress(int &addr, int txtcol, int txtline)
+{
+    char buf[5];
+    char bkg[5] = { 219,219,219,219,0 };
+    
+    if(addr < 0) {
+        addr = 0;
+    }
+    gfx.drawText(txtcol, txtline, gfx.color(c_blue), bkg);
+    snprintf(buf, 5, "%04x", addr);
+    gfx.drawText(txtcol, txtline, gfx.color(c_white), buf);
+    
+    gfx.setStartAddress(addr);
+}
+
+void demoGfxSpitscreen_setPanMode(bool &mode, int txtcol, int txtline)
+{
+    char buf[2];
+    char bkg[2] = { 219,0 };
+    
+    gfx.drawText(txtcol, txtline, gfx.color(c_blue), bkg);
+    snprintf(buf, 2, "%d", mode);
+    gfx.drawText(txtcol, txtline, gfx.color(c_white), buf);
+    
+    gfx.setPanningMode(mode);
+}
+
 void demoGfxSpitscreen()
 {
     gfx.setActivePage(0);
@@ -347,75 +413,68 @@ void demoGfxSpitscreen()
     gfx.drawRectangle(0, 0, gfx.width(), gfx.height(), gfx.color(c_white));
     gfx.drawText(8, 8, gfx.color(c_white), gfx.modeName());
     
-    int scanline = (gfx.scanlines() / 2) - 1;
     
-    char buf[10];
-    char bkg[54] = { 219,219,219,219,0 };
-
-    const int line1 = 22, line2 = 34, line3 = 46;
+    const int line1 = 22, line2 = 34, line3 = 46, line4 = 58;
     const int col = 88;
     
     gfx.drawText(8, line1, gfx.color(c_white), " scanline=");
     gfx.drawText(8, line2, gfx.color(c_white), "horiz.pan=");
     gfx.drawText(8, line3, gfx.color(c_white), "startaddr=");
+    gfx.drawText(8, line4, gfx.color(c_white), " pan mode=");
     
-    gfx.drawText(col, line1, gfx.color(c_blue), bkg);
-    snprintf(buf, 10, "%03d", scanline);
-    gfx.drawText(col, line1, gfx.color(c_white), buf);
+    int scanline = (gfx.scanlines() / 2) - 1;
+    demoGfxSpitscreen_setScanline(scanline, col, line1);
     
-    gfx.setSplitScreen(scanline);
+    int hpan = 0;
+    demoGfxSpitscreen_setHPan(hpan, col, line2);
     
-    int addr=0, hpan=0;
-    gfx.drawText(col, line2, gfx.color(c_blue), bkg);
-    gfx.drawText(col, line2, gfx.color(c_white), "00");
+    int addr = 0;
+    demoGfxSpitscreen_setStartAddress(addr, col, line3);
     
-    gfx.drawText(col, line3, gfx.color(c_blue), bkg);
-    gfx.drawText(col, line3, gfx.color(c_white), "0000");
+    bool panmode = 0;
+    demoGfxSpitscreen_setPanMode(panmode, col, line4);
     
     int k = getch();
     while(k != k_ESC) {
         if(k == 0 || k == 224) {
             switch(getch()) { // the real value
-                case k_PAGE_UP:     scanline--; break;
-                case k_PAGE_DOWN:   scanline++; break;
-                case k_UP_ARROW:    addr++; break;
-                case k_DOWN_ARROW:  addr--; break;
-                case k_LEFT_ARROW:  hpan--; break;
-                case k_RIGHT_ARROW: hpan++; break;
+                case k_PAGE_UP: 
+                    scanline--;
+                    demoGfxSpitscreen_setScanline(scanline, col, line1);
+                    break;
+                case k_PAGE_DOWN: 
+                    scanline++;
+                    demoGfxSpitscreen_setScanline(scanline, col, line1);
+                    break;
+                case k_UP_ARROW: 
+                    addr++;
+                    demoGfxSpitscreen_setStartAddress(addr, col, line3);
+                    break;
+                case k_DOWN_ARROW: 
+                    addr--;
+                    demoGfxSpitscreen_setStartAddress(addr, col, line3);
+                    break;
+                case k_LEFT_ARROW:
+                    hpan--;
+                    demoGfxSpitscreen_setHPan(hpan, col, line2);
+                    break;
+                case k_RIGHT_ARROW:
+                    hpan++;
+                    demoGfxSpitscreen_setHPan(hpan, col, line2);
+                    break;
                 default:
                     continue;
             }
-            if(scanline < 0) {
-                scanline = 0;
+        } else {
+            switch(k) {
+                case 'm':
+                case 'M':
+                    panmode = !panmode;
+                    demoGfxSpitscreen_setPanMode(panmode, col, line4);
+                    break;
+                default:
+                    continue;
             }
-            if(scanline > gfx.scanlines()-1) {
-                scanline = gfx.scanlines()-1;
-            }
-            gfx.drawText(col, line1, gfx.color(c_blue), bkg);
-            snprintf(buf, 10, "%03d", scanline);
-            gfx.drawText(col, line1, gfx.color(c_white), buf);
-            gfx.setSplitScreen(scanline);
-            
-            if(hpan < 0) {
-                hpan = 0;
-            }
-            if(hpan > gfx.width()) {
-                hpan = gfx.width();
-            }
-            gfx.drawText(col, line2, gfx.color(c_blue), bkg);
-            snprintf(buf, 13, "%02d", hpan);
-            gfx.drawText(col, line2, gfx.color(c_white), buf);
-            
-            gfx.setPanning(hpan);
-            
-            if(addr < 0) {
-                addr = 0;
-            }
-            gfx.drawText(col, line3, gfx.color(c_blue), bkg);
-            snprintf(buf, 13, "%04x", addr);
-            gfx.drawText(col, line3, gfx.color(c_white), buf);
-            
-            gfx.setStartAddress(addr);
         }
         k = getch();
     }

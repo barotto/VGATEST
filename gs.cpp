@@ -684,6 +684,19 @@ void GfxScreen::setPanning(uint8_t hPan)
     ACR_OUT(isra, ACR_HPELPAN, hPan);
 }
 
+void GfxScreen::setPanningMode(bool mode)
+{
+    uint16_t isra = 0x03da;
+    if(m_crtc_addr == CRTC_ADDR_MONO) {
+        isra = 0x03ba;
+    }
+    uint8_t reg;
+    ACR_IN(isra, ACR_ATTMODE, reg);
+    reg &= ~0x20;
+    reg |= (mode << 5);
+    ACR_OUT(isra, ACR_ATTMODE, reg);
+}
+
 void GfxScreen::setStartAddress(uint16_t address)
 {
     ::setStartAddress(m_crtc_addr, address);
