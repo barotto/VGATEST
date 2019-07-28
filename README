@@ -128,10 +128,12 @@ Split & Pan demo
 This demo shows the split screen and panning features.
 
 Keys:
-ARROW UP    = increase start address value
-ARROW DOWN  = decrease start address value
-ARROW LEFT  = decrease horizontal panning value
-ARROW RIGHT = increase horizontal panning value
++           = increase start address value
+-           = decrease start address value
+ARROW UP    = increase Preset Row Scan value
+ARROW DOWN  = decrease Preset Row Scan value
+ARROW LEFT  = decrease Horizontal Pel Panning value
+ARROW RIGHT = increase Horizontal Pel Panning value
 PAGE UP     = decrease split screen scanline value
 PAGE DOWN   = increase split screen scanline value
 M           = change Pixel Panning Mode value

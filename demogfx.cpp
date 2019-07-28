@@ -354,7 +354,26 @@ void demoGfxSpitscreen_setHPan(int &hpan, int txtcol, int txtline)
     snprintf(buf, 3, "%02d", hpan);
     gfx.drawText(txtcol, txtline, gfx.color(c_white), buf);
     
-    gfx.setPanning(hpan);
+    gfx.setHPanning(hpan);
+}
+
+void demoGfxSpitscreen_setVPan(int &vpan, int txtcol, int txtline)
+{
+    char buf[3];
+    char bkg[3] = { 219,219,0 };
+
+    if(vpan < 0) {
+        vpan = 0;
+    }
+    if(vpan > gfx.height()) {
+        vpan = gfx.height();
+    }
+    
+    gfx.drawText(txtcol, txtline, gfx.color(c_blue), bkg);
+    snprintf(buf, 3, "%02d", vpan);
+    gfx.drawText(txtcol, txtline, gfx.color(c_white), buf);
+    
+    gfx.setVPanning(vpan);
 }
 
 void demoGfxSpitscreen_setStartAddress(int &addr, int txtcol, int txtline)
@@ -413,26 +432,30 @@ void demoGfxSpitscreen()
     gfx.drawRectangle(0, 0, gfx.width(), gfx.height(), gfx.color(c_white));
     gfx.drawText(8, 8, gfx.color(c_white), gfx.modeName());
     
-    
-    const int line1 = 22, line2 = 34, line3 = 46, line4 = 58;
+    int line[5];
+    for(int i=0; i<5; i++) {
+        line[i] = 22 + i*12;
+    }
     const int col = 88;
     
-    gfx.drawText(8, line1, gfx.color(c_white), " scanline=");
-    gfx.drawText(8, line2, gfx.color(c_white), "horiz.pan=");
-    gfx.drawText(8, line3, gfx.color(c_white), "startaddr=");
-    gfx.drawText(8, line4, gfx.color(c_white), " pan mode=");
+    gfx.drawText(8, line[0], gfx.color(c_white), " scanline=");
+    gfx.drawText(8, line[1], gfx.color(c_white), "horiz.pan=");
+    gfx.drawText(8, line[2], gfx.color(c_white), " vert.pan=");
+    gfx.drawText(8, line[3], gfx.color(c_white), "startaddr=");
+    gfx.drawText(8, line[4], gfx.color(c_white), " pan mode=");
     
     int scanline = (gfx.scanlines() / 2) - 1;
-    demoGfxSpitscreen_setScanline(scanline, col, line1);
+    demoGfxSpitscreen_setScanline(scanline, col, line[0]);
     
-    int hpan = 0;
-    demoGfxSpitscreen_setHPan(hpan, col, line2);
+    int vpan = 0, hpan = 0;
+    demoGfxSpitscreen_setHPan(hpan, col, line[1]);
+    demoGfxSpitscreen_setVPan(vpan, col, line[2]);
     
     int addr = 0;
-    demoGfxSpitscreen_setStartAddress(addr, col, line3);
+    demoGfxSpitscreen_setStartAddress(addr, col, line[3]);
     
     bool panmode = 0;
-    demoGfxSpitscreen_setPanMode(panmode, col, line4);
+    demoGfxSpitscreen_setPanMode(panmode, col, line[4]);
     
     int k = getch();
     while(k != k_ESC) {
@@ -440,40 +463,48 @@ void demoGfxSpitscreen()
             switch(getch()) { // the real value
                 case k_PAGE_UP: 
                     scanline--;
-                    demoGfxSpitscreen_setScanline(scanline, col, line1);
+                    demoGfxSpitscreen_setScanline(scanline, col, line[0]);
                     break;
                 case k_PAGE_DOWN: 
                     scanline++;
-                    demoGfxSpitscreen_setScanline(scanline, col, line1);
+                    demoGfxSpitscreen_setScanline(scanline, col, line[0]);
                     break;
                 case k_UP_ARROW: 
-                    addr++;
-                    demoGfxSpitscreen_setStartAddress(addr, col, line3);
+                    vpan++;
+                    demoGfxSpitscreen_setVPan(vpan, col, line[2]);
                     break;
                 case k_DOWN_ARROW: 
-                    addr--;
-                    demoGfxSpitscreen_setStartAddress(addr, col, line3);
+                    vpan--;
+                    demoGfxSpitscreen_setVPan(vpan, col, line[2]);
                     break;
                 case k_LEFT_ARROW:
                     hpan--;
-                    demoGfxSpitscreen_setHPan(hpan, col, line2);
+                    demoGfxSpitscreen_setHPan(hpan, col, line[1]);
                     break;
                 case k_RIGHT_ARROW:
                     hpan++;
-                    demoGfxSpitscreen_setHPan(hpan, col, line2);
+                    demoGfxSpitscreen_setHPan(hpan, col, line[1]);
                     break;
                 default:
-                    continue;
+                    break;
             }
         } else {
             switch(k) {
+                case '+': 
+                    addr++;
+                    demoGfxSpitscreen_setStartAddress(addr, col, line[3]);
+                    break;
+                case '-': 
+                    addr--;
+                    demoGfxSpitscreen_setStartAddress(addr, col, line[3]);
+                    break;
                 case 'm':
                 case 'M':
                     panmode = !panmode;
-                    demoGfxSpitscreen_setPanMode(panmode, col, line4);
+                    demoGfxSpitscreen_setPanMode(panmode, col, line[4]);
                     break;
                 default:
-                    continue;
+                    break;
             }
         }
         k = getch();

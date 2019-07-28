@@ -675,13 +675,22 @@ void GfxScreen::setSplitScreen(uint16_t scanline)
     }
 }
 
-void GfxScreen::setPanning(uint8_t hPan)
+void GfxScreen::setHPanning(uint8_t hPan)
 {
     uint16_t isra = 0x03da;
     if(m_crtc_addr == CRTC_ADDR_MONO) {
         isra = 0x03ba;
     }
     ACR_OUT(isra, ACR_HPELPAN, hPan);
+}
+
+void GfxScreen::setVPanning(uint8_t vPan)
+{
+    int prs;
+    CRTC_IN(m_crtc_addr, CRTC_PRESET_ROW_SCAN, prs);
+    prs &= ~0x1f;
+    prs |= (vPan & 0x1f);
+    CRTC_OUT(m_crtc_addr, CRTC_PRESET_ROW_SCAN, prs);
 }
 
 void GfxScreen::setPanningMode(bool mode)

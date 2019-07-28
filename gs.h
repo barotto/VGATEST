@@ -116,7 +116,8 @@ public:
     void setPalette256(int16_t start, int16_t count, s_color *p);
 
     void setSplitScreen(uint16_t scanline);
-    void setPanning(uint8_t hpan);
+    void setHPanning(uint8_t hpan);
+    void setVPanning(uint8_t vpan);
     void setPanningMode(bool mode);
     void setStartAddress(uint16_t addr);
     void vsync();
