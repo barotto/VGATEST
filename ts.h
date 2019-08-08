@@ -87,6 +87,7 @@ public:
     void setVisiblePage(uint8_t page);
 
     void setSplitScreen(uint16_t scanline);
+    void setStartAddress(uint16_t address);
     void setPanning(uint8_t hPan, uint8_t vPan);
     uint8_t getHPanning();
     uint8_t getVPanning();

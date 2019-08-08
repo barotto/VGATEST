@@ -38,6 +38,8 @@ Split & Pan demo
 This demo shows the split screen and panning features.
 
 Keys:
++           = increase start address value
+-           = decrease start address value
 ARROW UP    = increase vertical panning value
 ARROW DOWN  = decrease vertical panning value
 ARROW LEFT  = decrease horizontal panning value

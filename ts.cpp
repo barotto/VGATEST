@@ -163,7 +163,7 @@ void TextScreen::setVisiblePage(uint8_t page)
     while(inp(m_isr1_addr) & 0x01);
 
     // set start address
-    setStartAddress(m_crtc_addr, offset);
+    setStartAddress(offset);
 
     // wait for vertical retrace
     while(!(inp(m_isr1_addr) & 0x08));
@@ -181,6 +181,11 @@ void TextScreen::setSplitScreen(uint16_t scanline)
     if(scanline < m_scanlines) {
         ::setSplitScreen(m_crtc_addr, scanline);
     }
+}
+
+void TextScreen::setStartAddress(uint16_t addr)
+{
+    ::setStartAddress(m_crtc_addr, addr);
 }
 
 void TextScreen::setPanning(uint8_t hPan, uint8_t vPan)

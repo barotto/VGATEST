@@ -40,28 +40,74 @@ void drawTextAxis()
     }
 }
 
+void demoTextSplitscreen_setStartAddress(int &addr, int row, int col)
+{
+    if(addr < 0) {
+        addr = 0;
+    }
+    addr &= 0xffff;
+    
+    char buf[10];
+    snprintf(buf, 10, "addr=%04d", addr);
+    text(row,col)(buf,c_white,c_black);
+    
+    text.setStartAddress(addr);
+}
+
+void demoTextSplitscreen_setPanning(int &hpan, int &vpan, int row, int col)
+{
+    char buf[10];
+    
+    if(hpan < 0) {
+        hpan = 0;
+    }
+    if(hpan > 15) {
+        hpan = 15;
+    }
+    snprintf(buf, 10, "hpan=%02d", hpan);
+    text(row,col)(buf,c_white,c_black);
+    
+    if(vpan < 0) {
+        vpan = 0;
+    }
+    if(vpan > (text.boxh()-1)) {
+        vpan = (text.boxh()-1);
+    }
+    snprintf(buf, 10, "vpan=%02d", vpan);
+    text(row,col+8)(buf,c_white,c_black);
+
+    text.setPanning(hpan, vpan);
+}
+
+void demoTextSplitscreen_setSplitscreen(int &scanline, int row, int col)
+{
+    if(scanline < 0) {
+        scanline = 0;
+    }
+    if(scanline > text.scanlines()-1) {
+        scanline = text.scanlines()-1;
+    }
+    char buf[13];
+    snprintf(buf, 13, "scanline=%03d", scanline);
+    text(row,col)(buf,c_white,c_black);
+    
+    text.setSplitScreen(scanline);
+}
+
 void demoTextSplitscreen()
 {
-    int scanline = text.scanlines()/2;
-    text.setSplitScreen(scanline);
-
     text.setColor(c_brown);
     drawTextAxis();
 
     text(1,1)(text.modeName(),c_lgray);
 
-    char buf[13];
-
-    snprintf(buf, 13, "scanline=%d", scanline);
-    text(2,1)(buf,c_white,c_black);
-
-    int hpan = text.getHPanning();
-    snprintf(buf, 13, "hpan=%02d", hpan);
-    text(2,15)(buf,c_white,c_black);
-
-    int vpan = text.getVPanning();
-    snprintf(buf, 13, "vpan=%02d", vpan);
-    text(2,24)(buf,c_white,c_black);
+    int scanline = text.scanlines()/2;
+    int hpan = text.getHPanning(), vpan = text.getVPanning();
+    int addr = 0;
+    
+    demoTextSplitscreen_setSplitscreen(scanline, 2, 1);
+    demoTextSplitscreen_setPanning(hpan, vpan, 2, 15);
+    demoTextSplitscreen_setStartAddress(addr, 2, 32);
 
     text.setColor(c_white);
     char ch = 0;
@@ -77,43 +123,46 @@ void demoTextSplitscreen()
     while(k != k_ESC) {
         if(k == 0 || k == 224) {
             switch(getch()) { // the real value
-                case k_PAGE_UP:     scanline--; break;
-                case k_PAGE_DOWN:   scanline++; break;
-                case k_UP_ARROW:    vpan++; break;
-                case k_DOWN_ARROW:  vpan--; break;
-                case k_LEFT_ARROW:  hpan--; break;
-                case k_RIGHT_ARROW: hpan++; break;
+                case k_PAGE_UP: 
+                    scanline--;
+                    demoTextSplitscreen_setSplitscreen(scanline, 2, 1);
+                    break;
+                case k_PAGE_DOWN: 
+                    scanline++;
+                    demoTextSplitscreen_setSplitscreen(scanline, 2, 1);
+                    break;
+                case k_UP_ARROW:
+                    vpan++;
+                    demoTextSplitscreen_setPanning(hpan, vpan, 2, 15);
+                    break;
+                case k_DOWN_ARROW:
+                    vpan--;
+                    demoTextSplitscreen_setPanning(hpan, vpan, 2, 15);
+                    break;
+                case k_LEFT_ARROW:
+                    hpan--;
+                    demoTextSplitscreen_setPanning(hpan, vpan, 2, 15);
+                    break;
+                case k_RIGHT_ARROW:
+                    hpan++;
+                    demoTextSplitscreen_setPanning(hpan, vpan, 2, 15);
+                    break;
                 default:
-                    continue;
+                    break;
             }
-            if(scanline < 0) {
-                scanline = 0;
+        } else {
+            switch(k) {
+                case '+': 
+                    addr++;
+                    demoTextSplitscreen_setStartAddress(addr, 2, 32);
+                    break;
+                case '-': 
+                    addr--;
+                    demoTextSplitscreen_setStartAddress(addr, 2, 32);
+                    break;
+                default:
+                    break;
             }
-            if(scanline > text.scanlines()-1) {
-                scanline = text.scanlines()-1;
-            }
-            snprintf(buf, 13, "scanline=%03d", scanline);
-            text(2,1)(buf,c_white,c_black);
-            text.setSplitScreen(scanline);
-
-            if(hpan < 0) {
-                hpan = 0;
-            }
-            if(hpan > 15) {
-                hpan = 15;
-            }
-            snprintf(buf, 13, "hpan=%02d", hpan);
-            text(2,15)(buf,c_white,c_black);
-            if(vpan < 0) {
-                vpan = 0;
-            }
-            if(vpan > (text.boxh()-1)) {
-                vpan = (text.boxh()-1);
-            }
-            snprintf(buf, 13, "vpan=%02d", vpan);
-            text(2,24)(buf,c_white,c_black);
-
-            text.setPanning(hpan,vpan);
         }
         k = getch();
     }
