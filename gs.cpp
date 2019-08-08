@@ -244,7 +244,7 @@ void GfxScreen::putPixel4(int16_t x, int16_t y, uint8_t color)
     }
 
     uint8_t bitmask = 1 << ((x & 0x07) ^ 0x07);
-    outp(GCR_ADDR, 0x08);
+    outp(GCR_ADDR, GCR_BITMASK);
     outp(GCR_DATA, bitmask);
 
     int offset = y*m_lineSize + x/8;
@@ -260,7 +260,7 @@ void GfxScreen::putPixel8(int16_t x, int16_t y, uint8_t color)
     }
 
     // set the mask so that only one pixel gets written
-    outp(SEQ_ADDR, 0x02);
+    outp(SEQ_ADDR, SEQ_MAPMASK);
     outp(SEQ_DATA, 1 << (x & 0x3));
 
     // put pixel in memory

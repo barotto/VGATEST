@@ -37,6 +37,8 @@ void setVGARegisters(uint16_t baseAddr, const int16_t *regs);
 void unlockCRTC(int16_t baseAddr);
 void setSplitScreen(uint16_t baseAddr, uint16_t scanline);
 void setStartAddress(uint16_t baseAddr, uint16_t startAddr);
+uint8_t readRegister(uint16_t baseAddr, uint8_t reg);
+bool toggleRegisterBit(uint16_t baseAddr, uint8_t reg, uint8_t bit);
 
 void fillLong(void *addr, uint32_t value, int32_t count);
 #pragma aux fillLong = \

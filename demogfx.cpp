@@ -27,6 +27,53 @@
 #include "vgatest.h"
 #include "fps.h"
 
+void demoGfxDecodeSpecialKey(int key)
+{
+    gfx.drawLine(0, 0, 20, 0, c_white);
+    
+    int16_t addr = 0;
+    uint8_t reg = 0;
+    switch(key) {
+        case k_F1:
+            addr = gfx.CRTCAddress();
+            reg = CRTC_MODE_CONTROL;
+            break;
+        case k_F2:
+            addr = gfx.CRTCAddress();
+            reg = CRTC_UNDERLINE;
+            break;
+        default:
+            break;
+    }
+    if(addr && reg) {
+        
+        gfx.drawLine(0, 0, 1, 0, c_red);
+        
+        uint8_t regval = readRegister(addr, reg);
+        for(int i=0; i<8; i++) {
+            if(regval & 1) {
+                gfx.putPixel(3+i*2, 0, c_green);
+            } else {
+                gfx.putPixel(3+i*2, 0, c_lblue);
+            }
+            regval >>= 1;
+        }
+        key = getch();
+        switch(key) {
+            case '0': case '1': case '2': case '3':
+            case '4': case '5': case '6': case '7': {
+                int bit = key - '0';
+                bool newval = toggleRegisterBit(addr, reg, bit);
+                gfx.putPixel(3+bit*2, 0, (newval)?c_green:c_lblue);
+                break;
+            }
+            default:
+                break;
+        }
+    }
+    
+    gfx.drawLine(0, 0, 1, 0, c_white);
+}
 
 //---------------------------------------------------
 //
@@ -460,7 +507,8 @@ void demoGfxSpitscreen()
     int k = getch();
     while(k != k_ESC) {
         if(k == 0 || k == 224) {
-            switch(getch()) { // the real value
+            k = getch();
+            switch(k) { // the real value
                 case k_PAGE_UP: 
                     scanline--;
                     demoGfxSpitscreen_setScanline(scanline, col, line[0]);
@@ -486,6 +534,7 @@ void demoGfxSpitscreen()
                     demoGfxSpitscreen_setHPan(hpan, col, line[1]);
                     break;
                 default:
+                    demoGfxDecodeSpecialKey(k);
                     break;
             }
         } else {

@@ -113,3 +113,32 @@ void setStartAddress(uint16_t baseAddr, uint16_t address)
     CRTC_OUT(baseAddr, CRTC_STARTADDR_HI, (address & 0xff00) >> 8);
     CRTC_OUT(baseAddr, CRTC_STARTADDR_LO, (address & 0x00ff));
 }
+
+uint8_t readRegister(uint16_t baseAddr, uint8_t reg)
+{
+    uint8_t regval;
+    
+    outp(baseAddr, reg);
+    regval = inp(baseAddr + 1);
+    
+    return regval;
+}
+
+bool toggleRegisterBit(uint16_t baseAddr, uint8_t reg, uint8_t bit)
+{
+    if((baseAddr == CRTC_ADDR_MONO || baseAddr == CRTC_ADDR_COL) && reg <= CRTC_OVERFLOW) {
+        unlockCRTC(baseAddr);
+    }
+    
+    uint8_t regval = readRegister(baseAddr, reg);
+    
+    uint8_t mask = (1 << bit);
+    bool bitval = !(regval & mask);
+    regval &= ~mask;
+    regval |= bitval << bit;
+    
+    outp(baseAddr, reg);
+    outp(baseAddr+1, regval);
+    
+    return bitval;
+}

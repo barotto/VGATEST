@@ -81,7 +81,8 @@ public:
     inline int16_t colors()   const { return m_colors; }
     inline uint8_t fontHeight()    const { return m_fontHeight; }
     inline uint8_t *activeOffset() const { return m_activeOffset; }
-
+    inline uint16_t CRTCAddress()  const { return m_crtc_addr; }
+    
     inline uint8_t color(uint8_t cname) const { return m_cval[m_cmap[cname]]; }
     inline uint8_t palidx(uint8_t color) const { return m_cval[color]; }
 
