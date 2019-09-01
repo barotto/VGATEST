@@ -113,6 +113,8 @@ enum textMode {
 };
 enum videoModes {
     // BIOS modes
+    v_b320x200_04h = 0x04,
+    v_b640x200_06h = 0x06,
     v_b320x200_0Dh = 0x0D,
     v_b640x200_0Eh = 0x0E,
     v_b640x350_0Fh = 0x0F,

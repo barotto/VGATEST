@@ -38,6 +38,7 @@ private:
     uint8_t m_origMode;       // the original video mode
     uint8_t far *m_fontAddr;  // address of the current font
     uint8_t m_fontHeight;
+    uint8_t *m_videoMem;
     uint8_t *m_activeOffset;  // address of the active page
     int16_t m_maxx;           // maximum x coord
     int16_t m_maxy;           // maximum y coord
@@ -126,6 +127,8 @@ public:
 private:
     // routines to set the modes
     // BIOS
+    void mode_b320x200_04h();
+    void mode_b640x200_06h();
     void mode_b320x200_0Dh();
     void mode_b640x200_0Eh();
     void mode_b640x350_0Fh();
@@ -144,14 +147,21 @@ private:
     void mode_t360x480();
     void mode_t400x300();
 
+    void clear_odd_even(int row, int lines, uint32_t color);
+    void clear1(int row, int lines, uint8_t color);
+    void clear2(int row, int lines, uint8_t color);
     void clear4(int row, int lines, uint8_t color);
     void clear8(int row, int lines, uint8_t color);
     void clear8chained(int row, int lines, uint8_t color);
 
+    void putPixel1(int16_t x, int16_t y, uint8_t color);
+    void putPixel2(int16_t x, int16_t y, uint8_t color);
     void putPixel4(int16_t x, int16_t y, uint8_t color);
     void putPixel8(int16_t x, int16_t y, uint8_t color);
     void putPixel8chained(int16_t x, int16_t y, uint8_t color);
 
+    int16_t getPixel1(int16_t x, int16_t y);
+    int16_t getPixel2(int16_t x, int16_t y);
     int16_t getPixel4(int16_t x, int16_t y);
     int16_t getPixel8(int16_t x, int16_t y);
     int16_t getPixel8chained(int16_t x, int16_t y);

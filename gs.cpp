@@ -30,6 +30,7 @@
 #include "gs.h"
 
 #define VGA_ADDR ((uint8_t *) 0xa0000)
+#define CGA_ADDR ((uint8_t *) 0xb8000)
 
 int32_t SIN_ACOS[1024];
 
@@ -46,6 +47,7 @@ GfxScreen::GfxScreen()
 
     m_fontAddr = NULL;
     m_fontHeight = 14;
+    m_videoMem = VGA_ADDR;
     m_activeOffset = 0;
     m_maxx = 0;
     m_maxy = 0;
@@ -81,9 +83,12 @@ void GfxScreen::setMode(int16_t mode)
 {
     m_error = e_none;
     m_modeName = NULL;
-
+    m_videoMem = VGA_ADDR;
+    
     switch (mode)
     {
+    case v_b320x200_04h: mode_b320x200_04h(); break;
+    case v_b640x200_06h: mode_b640x200_06h(); break;
     case v_b320x200_0Dh: mode_b320x200_0Dh(); break;
     case v_b640x200_0Eh: mode_b640x200_0Eh(); break;
     case v_b640x350_0Fh: mode_b640x350_0Fh(); break;
@@ -110,7 +115,7 @@ void GfxScreen::setMode(int16_t mode)
     }
 
     m_fontAddr = getFont(m_fontHeight);
-    m_activeOffset = VGA_ADDR;
+    m_activeOffset = m_videoMem;
     if(inp(MOR_READ) & 1) {
         m_crtc_addr = CRTC_ADDR_COL;
         m_isr1_addr = ISR1_ADDR_COL;
@@ -149,6 +154,45 @@ void GfxScreen::resetMode()
     m_getPixelFn = NULL;
     m_clearFn = NULL;
     m_drawTextFn = NULL;
+}
+
+void GfxScreen::clear_odd_even(int row, int lines, uint32_t color)
+{
+    /* address section differs depending on odd/even scanline */
+    uint8_t *even_ptr = m_activeOffset;
+    uint8_t *odd_ptr = m_activeOffset + 0x2000;
+    
+    while(lines--) {
+        int y = row + lines;
+        int bank_line = y / 2;
+        uint8_t *base;
+        if(y & 1) {
+            base = odd_ptr;
+        } else {
+            base = even_ptr;
+        }
+        fillLong(base + (m_lineSize * bank_line), color, m_lineSize/4);
+    }
+}
+
+void GfxScreen::clear1(int row, int lines, uint8_t color)
+{
+    uint32_t c = 0;
+    if(color & 1) {
+        c = 0xffffffff;
+    }
+    
+    clear_odd_even(row, lines, c);
+}
+
+void GfxScreen::clear2(int row, int lines, uint8_t color)
+{
+    color &= 3;
+    uint32_t c = color | (color << 2) | (color << 4) | (color << 6);
+    c = (c << 8) | c;
+    c = (c << 16) | c;
+
+    clear_odd_even(row, lines, c);
 }
 
 void GfxScreen::clear4(int row, int lines, uint8_t color)
@@ -214,7 +258,7 @@ int32_t GfxScreen::getPageOffset(uint8_t page)
 
 void GfxScreen::setActivePage(uint8_t page)
 {
-    m_activeOffset = VGA_ADDR + getPageOffset(page);
+    m_activeOffset = m_videoMem + getPageOffset(page);
 }
 
 void GfxScreen::setVisiblePage(uint8_t page)
@@ -234,6 +278,32 @@ void GfxScreen::setVisiblePage(uint8_t page)
 
     // wait for vertical retrace
     while(!(inp(m_isr1_addr) & 0x08));
+}
+
+void GfxScreen::putPixel1(int16_t x, int16_t y, uint8_t color)
+{
+    uint8_t *ptr = m_activeOffset +  0x2000*(y%2) + m_lineSize*(y/2) + (x/8);
+    int mask = (1<<7) >> (x%8); 
+    uint8_t temp = *ptr;
+    color &= 1;
+    color <<= 7;
+    color >>= (x%8);
+    temp &= ~mask;
+    temp |= color;
+    *ptr = temp;
+}
+
+void GfxScreen::putPixel2(int16_t x, int16_t y, uint8_t color)
+{
+    uint8_t *ptr = m_activeOffset + 0x2000*(y%2) + m_lineSize*(y/2) + (2*x/8);
+    int mask = (3<<6) >> (2*x%8);
+    uint8_t temp = *ptr;
+    color &= 3;
+    color <<= 6;
+    color >>= (2*x%8);
+    temp &= ~mask;
+    temp |= color;
+    *ptr = temp;
 }
 
 void GfxScreen::putPixel4(int16_t x, int16_t y, uint8_t color)
@@ -276,6 +346,23 @@ void GfxScreen::putPixel8chained(int16_t x, int16_t y, uint8_t color)
 
     // put pixel in memory
     *(m_activeOffset + (m_lineSize * y) + x) = color;
+}
+
+int16_t GfxScreen::getPixel1(int16_t x, int16_t y)
+{
+    uint8_t *ptr = m_activeOffset +  0x2000*(y%2) + m_lineSize*(y/2) + (x/8);
+    int mask = (1<<7) >> (x%8); 
+    uint8_t temp = *ptr;
+    return (bool)(temp & mask);
+}
+
+int16_t GfxScreen::getPixel2(int16_t x, int16_t y)
+{
+    uint8_t *ptr = m_activeOffset + 0x2000*(y%2) + m_lineSize*(y/2) + (2*x/8);
+    uint8_t temp = *ptr;
+    temp >>= 6 - (2*x%8);
+    temp &= 0x3;
+    return temp;
 }
 
 int16_t GfxScreen::getPixel4(int16_t x, int16_t y)
@@ -414,7 +501,6 @@ void GfxScreen::drawRectangle(int16_t x, int16_t y, int16_t width, int16_t heigh
 
 void GfxScreen::drawChar8(int16_t x, int16_t y, uint8_t color, char c)
 {
-    // draws a character in 8-bit / 256-color modes
     uint8_t far *font = m_fontAddr + (c * m_fontHeight);
 
     for (int i = 0; i < m_fontHeight; i++) {
@@ -733,7 +819,6 @@ void GfxScreen::setStdVGAColorMap()
     for(int i=0; i<256; i++) m_cmap[i] = i;
 }
 
-
 //****************************************************************************//
 // MODE SETTING
 //****************************************************************************//
@@ -760,6 +845,96 @@ void selectVGAFreq(int hpels, int lines)
     SEQ_OUT(0x00,0x01);   // synchronous reset while setting Misc Output
     outp(MOR_ADDR, reg);
     SEQ_OUT(0x00,0x03);   // undo reset (restart sequencer)
+}
+
+void GfxScreen::mode_b320x200_04h()
+{
+    setBIOSMode(0x04);
+
+    m_videoMem = CGA_ADDR;
+    m_width    = 320;
+    m_height   = 200;
+    m_scanlines = 400;
+    m_pages    = 1;
+    m_lineSize = 80;
+    m_chained  = 0;
+    m_pageSize = 16000;
+    m_modeName = "Mode 04h 320x200x4";
+    m_colors   = 4;
+    m_putPixelFn = putPixel2;
+    m_getPixelFn = getPixel2;
+    m_clearFn    = clear2;
+    m_drawTextFn = drawText8;
+
+    memset(m_cval, 0, 256);
+    m_cval[0] = 0;
+    m_cval[1] = 1;
+    m_cval[2] = 2;
+    m_cval[3] = 3;
+
+    m_cmap[c_black  ] = 0;
+    m_cmap[c_blue   ] = 1;
+    m_cmap[c_green  ] = 1;
+    m_cmap[c_cyan   ] = 1;
+    m_cmap[c_red    ] = 2;
+    m_cmap[c_magenta] = 2;
+    m_cmap[c_brown  ] = 0;
+    m_cmap[c_lgray  ] = 3;
+    m_cmap[c_dgray  ] = 0;
+    m_cmap[c_lblue  ] = 1;
+    m_cmap[c_lgreen ] = 1;
+    m_cmap[c_lcyan  ] = 1;
+    m_cmap[c_lred   ] = 2;
+    m_cmap[c_pink   ] = 2;
+    m_cmap[c_yellow ] = 3;
+    m_cmap[c_white  ] = 3;
+    for(int i=16; i<256; i++) {
+        m_cmap[i] = i%2;
+    }
+}
+
+void GfxScreen::mode_b640x200_06h()
+{
+    setBIOSMode(0x06);
+
+    m_videoMem = CGA_ADDR;
+    m_width    = 640;
+    m_height   = 200;
+    m_scanlines = 400;
+    m_pages    = 1;
+    m_lineSize = 80;
+    m_chained  = 0;
+    m_pageSize = 16000;
+    m_modeName = "Mode 06h 640x200x2";
+    m_colors   = 2;
+    m_putPixelFn = putPixel1;
+    m_getPixelFn = getPixel1;
+    m_clearFn    = clear1;
+    m_drawTextFn = drawText8;
+
+    memset(m_cval, 0, 256);
+    m_cval[0] = 0;
+    m_cval[1] = 1;
+
+    m_cmap[c_black  ] = 0;
+    m_cmap[c_blue   ] = 0;
+    m_cmap[c_green  ] = 1;
+    m_cmap[c_cyan   ] = 1;
+    m_cmap[c_red    ] = 1;
+    m_cmap[c_magenta] = 1;
+    m_cmap[c_brown  ] = 0;
+    m_cmap[c_lgray  ] = 1;
+    m_cmap[c_dgray  ] = 0;
+    m_cmap[c_lblue  ] = 1;
+    m_cmap[c_lgreen ] = 1;
+    m_cmap[c_lcyan  ] = 1;
+    m_cmap[c_lred   ] = 1;
+    m_cmap[c_pink   ] = 1;
+    m_cmap[c_yellow ] = 1;
+    m_cmap[c_white  ] = 1;
+    for(int i=16; i<256; i++) {
+        m_cmap[i] = i%2;
+    }
 }
 
 void GfxScreen::mode_b320x200_0Dh()

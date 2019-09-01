@@ -244,6 +244,8 @@ int main(int argc, char *argv[])
 
             int modesrow = text.setRow(text.getRow()+2);
             text(modesrow, 6)("BIOS modes\n");
+            text(" 4h 320x200 [04]\n");
+            text(" 6h 640x200 [06]\n");
             text(" Dh 320x200 [0d]\n");
             text(" Eh 640x200 [0e]\n");
             text(" Fh 640x350 [0f]\n");

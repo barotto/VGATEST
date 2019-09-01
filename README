@@ -159,6 +159,8 @@ r   = repeat tests
 Video modes available
 ---------------------
 Name  Col.  Resolut.  Pages Mode  
+04    4     320x200   1     CGA comp.
+06    2     640x200   1     CGA comp.
 Dh    16    320x200   8     planar
 Eh    16    640x200   4     planar
 Fh    mono  640x350   2     planar
