@@ -805,6 +805,11 @@ void GfxScreen::vsync()
     while(!(inp(m_isr1_addr) & 0x08));
 }
 
+void GfxScreen::wait_disp_enable()
+{
+    while((inp(m_isr1_addr) & 0x01));
+}
+
 void GfxScreen::setPlanarRWMode(int rmode, int wmode)
 {
     outp(GCR_ADDR, 0x05); // R/W mode
@@ -856,6 +861,7 @@ void GfxScreen::mode_b320x200_04h()
     m_height   = 200;
     m_scanlines = 400;
     m_pages    = 1;
+    m_lineOffset = 40;
     m_lineSize = 80;
     m_chained  = 0;
     m_pageSize = 16000;
@@ -902,6 +908,7 @@ void GfxScreen::mode_b640x200_06h()
     m_height   = 200;
     m_scanlines = 400;
     m_pages    = 1;
+    m_lineOffset = 40;
     m_lineSize = 80;
     m_chained  = 0;
     m_pageSize = 16000;
@@ -945,6 +952,7 @@ void GfxScreen::mode_b320x200_0Dh()
     m_height   = 200;
     m_scanlines = 400;
     m_pages    = 8;
+    m_lineOffset = 40;
     m_lineSize = 40;
     m_chained  = 0;
     m_pageSize = 32000;
@@ -969,6 +977,7 @@ void GfxScreen::mode_b640x200_0Eh()
     m_height   = 200;
     m_scanlines = 400;
     m_pages    = 4;
+    m_lineOffset = 80;
     m_lineSize = 80;
     m_chained  = 0;
     m_pageSize = 64000;
@@ -993,6 +1002,7 @@ void GfxScreen::mode_b640x350_0Fh()
     m_height   = 350;
     m_scanlines = 350;
     m_pages    = 2;
+    m_lineOffset = 80;
     m_lineSize = 80;
     m_chained  = 0;
     m_pageSize = 112000;
@@ -1041,6 +1051,7 @@ void GfxScreen::mode_b640x350_10h()
     m_height   = 350;
     m_scanlines = 350;
     m_pages    = 2;
+    m_lineOffset = 80;
     m_lineSize = 80;
     m_chained  = 0;
     m_pageSize = 112000;
@@ -1065,6 +1076,7 @@ void GfxScreen::mode_b640x480_12h()
     m_height   = 480;
     m_scanlines = 480;
     m_pages    = 1;
+    m_lineOffset = 80;
     m_lineSize = 80;
     m_chained  = 0;
     m_pageSize = 153600;
@@ -1089,6 +1101,7 @@ void GfxScreen::mode_b320x200_13h()
     m_height   = 200;
     m_scanlines = 400;
     m_pages    = 1;
+    m_lineOffset = 80;
     m_lineSize = 320;
     m_chained  = 1;
     m_pageSize = 64000;
@@ -1110,6 +1123,7 @@ void GfxScreen::mode_t160x120()
     m_maxx    = 159;
     m_maxy    = 119;
     m_pages   = 13;
+    m_lineOffset = 40;
     m_lineSize = 40;
     m_chained  = 0;
     m_pageSize = 19200;
@@ -1170,6 +1184,7 @@ void GfxScreen::mode_t296x220()
     m_height   = 220;
     m_scanlines = 440;
     m_pages    = 4;
+    m_lineOffset = 74;
     m_lineSize = 74;
     m_pageSize = 65120;
     m_modeName = "296x220x256 planar";
@@ -1227,6 +1242,7 @@ void GfxScreen::mode_t256x256_Q()
     m_height   = 256;
     m_scanlines = 512;
     m_pages    = 1;
+    m_lineOffset = 64;
     m_lineSize = 256;
     m_chained  = 1;
     m_pageSize = 65536;
@@ -1281,6 +1297,7 @@ void GfxScreen::mode_t320x200_Y()
     m_height   = 200;
     m_scanlines = 400;
     m_pages    = 4;
+    m_lineOffset = 80;
     m_lineSize = 80;
     m_pageSize = 64000;
     m_chained  = 0;
@@ -1311,6 +1328,7 @@ void GfxScreen::mode_t320x240_X()
     m_height   = 240;
     m_scanlines = 480;
     m_pages    = 3;
+    m_lineOffset = 80;
     m_lineSize = 80;
     m_pageSize = 76800;
     m_chained  = 0;
@@ -1354,6 +1372,7 @@ void GfxScreen::mode_t320x400()
     m_height   = 400;
     m_scanlines = 400;
     m_pages    = 2;
+    m_lineOffset = 80;
     m_lineSize = 80;
     m_pageSize = 128000;
     m_chained  = 0;
@@ -1389,6 +1408,7 @@ void GfxScreen::mode_t360x270()
     m_height   = 270;
     m_scanlines = 540;
     m_pages    = 2;
+    m_lineOffset = 90;
     m_lineSize = 90;
     m_pageSize = 97200;
     m_chained  = 0;
@@ -1443,6 +1463,7 @@ void GfxScreen::mode_t360x360()
     m_height   = 360;
     m_scanlines = 360;
     m_pages    = 2;
+    m_lineOffset = 90;
     m_lineSize = 90;
     m_pageSize = 129600;
     m_chained  = 0;
@@ -1497,6 +1518,7 @@ void GfxScreen::mode_t360x480()
     m_height   = 480;
     m_scanlines = 480;
     m_pages    = 1;
+    m_lineOffset = 90;
     m_lineSize = 90;
     m_pageSize = 172800;
     m_chained  = 0;
@@ -1548,6 +1570,7 @@ void GfxScreen::mode_t400x300()
     m_height   = 300;
     m_scanlines = 300;
     m_pages    = 2;
+    m_lineOffset = 100;
     m_lineSize = 100;
     m_pageSize = 120000;
     m_chained  = 0;

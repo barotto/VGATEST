@@ -559,3 +559,69 @@ void demoGfxSpitscreen()
         k = getch();
     }
 }
+
+
+//---------------------------------------------------
+//
+// Scrolls the screen horizontally.
+//
+void demoGfxHScrolling()
+{
+    gfx.setActivePage(0);
+    gfx.clear(0);
+    gfx.setVisiblePage(0);
+    
+    int x0 = (gfx.width() / 4) - 10;
+    int x1 = gfx.width() - (gfx.width() / 4) - 10;
+    for(int i=0; i<20; i+=2) {
+        gfx.drawLine(x0+i, 0, x0+i, gfx.maxy(), gfx.color(c_yellow));
+        gfx.drawLine(x1+i, 0, x1+i, gfx.maxy(), gfx.color(c_yellow));
+    }
+    
+    gfx.drawText(8, 8, gfx.color(c_white), gfx.modeName());
+    gfx.vsync();
+    
+    int k = 0;
+    int hpan = 0;
+    int startaddr = 0;
+    int amount = 1;
+    while(k != k_ESC) {
+        hpan += amount;
+        if(hpan > 7) {
+            hpan = 0;
+            startaddr += amount;
+        }
+        if(startaddr > gfx.lineOffset()) {
+            startaddr = amount;
+        }
+        
+        gfx.wait_disp_enable();
+        gfx.setStartAddress(startaddr);
+        gfx.vsync();
+        gfx.setHPanning(hpan);
+        
+        if(kbhit()) {
+            k = getch();
+            if(k == 0 || k == 224) {
+                k = getch();
+            } else {
+                switch(k) {
+                    case '+':
+                        amount++;
+                        if(amount > 10) {
+                            amount = 10;
+                        }
+                        break;
+                    case '-': 
+                        amount--;
+                        if(amount < 0) {
+                            amount = 0;
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+    }
+}

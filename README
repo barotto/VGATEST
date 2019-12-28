@@ -142,6 +142,17 @@ M           = change Pixel Panning Mode value
 ESC         = exit
 
 
+Scrolling demo
+--------------
+This demo smoothly scrolls two vertical bars horizontally using the AC
+horizontal pel panning register and the CRTC start address.
+
+Keys:
++           = increase scrolling amount
+-           = decrease scrolling amount / pause
+ESC         = exit
+
+
 Benchmark
 ---------
 Performs a series of video memory access speed tests. Two values are given:

@@ -232,12 +232,13 @@ int main(int argc, char *argv[])
             text("Palette     [p]\n");
             text("Worms       [w]\n");
             text("Split & Pan [s]\n");
+            text("Scrolling   [r]\n");
             text("Benchmark   [b]\n");
             text(text.getRow()+1, 33);
             text("Which Test?");
             text.getPos(promptrow, promptcol);
 
-            int demo = getCharFromKeyb("cClLpPwWsSbB", promptrow, promptcol);
+            int demo = getCharFromKeyb("cClLpPwWsSrRbB", promptrow, promptcol);
             if(demo == 'q') {
                 continue;
             }
@@ -300,6 +301,9 @@ int main(int argc, char *argv[])
                     break;
                 case 's':
                     demoGfxSpitscreen();
+                    break;
+                case 'r':
+                    demoGfxHScrolling();
                     break;
                 case 'b':
                     demoMemBench(true);

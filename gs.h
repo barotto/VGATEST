@@ -46,6 +46,7 @@ private:
     int16_t m_height;         // the height in pixels
     int16_t m_scanlines;      // number of visible scanlines
     int16_t m_pages;          // the number of graphic pages
+    int32_t m_lineOffset;     // offset to the next line in video memory
     int32_t m_lineSize;       // offset to next scan line
     int32_t m_pageSize;       // offset to a page
     bool  m_chained;          // 1=planes are chained (linear buffer)
@@ -75,6 +76,7 @@ public:
     inline int16_t height()   const { return m_height; }
     inline int16_t scanlines()const { return m_scanlines; }
     inline int16_t pages()    const { return m_pages; }
+    inline int32_t lineOffset() const { return m_lineOffset; }
     inline int32_t lineSize() const { return m_lineSize; }
     inline int32_t pageSize() const { return m_pageSize; }
     inline bool  chained()    const { return m_chained; }
@@ -123,6 +125,7 @@ public:
     void setPanningMode(bool mode);
     void setStartAddress(uint16_t addr);
     void vsync();
+    void wait_disp_enable();
 
 private:
     // routines to set the modes
