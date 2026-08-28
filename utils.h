@@ -2,7 +2,7 @@
   VGATEST
   Use at your own risk.
 
-  Copyright (C) 2019  Marco Bortolin
+  Copyright (C) 2019-2026  Marco Bortolin
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -40,12 +40,19 @@ void setStartAddress(uint16_t baseAddr, uint16_t startAddr);
 uint8_t readRegister(uint16_t baseAddr, uint8_t reg);
 bool toggleRegisterBit(uint16_t baseAddr, uint8_t reg, uint8_t bit);
 
+#ifdef __386__
 void fillLong(void *addr, uint32_t value, int32_t count);
 #pragma aux fillLong = \
     "cld" \
     "rep stosd" \
     parm [edi] [eax] [ecx];
-
+#else
+void fillWord(void *addr, uint16_t value, uint16_t count);
+#pragma aux fillWord = \
+    "cld" \
+    "rep stosw" \
+    parm [es di] [ax] [cx];
+#endif
 
 //---------------------------------------------------
 //  Inline replacement for srand() and rand().

@@ -2,7 +2,7 @@
   VGATEST
   Use at your own risk.
 
-  Copyright (C) 2019  Marco Bortolin
+  Copyright (C) 2019-2026  Marco Bortolin
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -45,8 +45,8 @@ private:
     int m_boxh;
     int16_t m_crtc_addr;
     int16_t m_isr1_addr;
-    char *m_textPage;
-    char *m_activeOffset;
+    uint8_t *m_textPage;
+    uint8_t *m_activeOffset;
 
     uint8_t m_overscanColor;
 
@@ -59,7 +59,7 @@ private:
     void setMode_b80x25_9x16_07h();
     void setMode_640x480(int boxh);
 
-    int32_t getPageOffset(uint8_t page);
+    uint16_t getPageOffset(uint8_t page);
 
     void (TextScreen::*m_resetModeFn)();
 
@@ -76,8 +76,8 @@ public:
     inline int boxw() const { return m_boxw; }
     inline int boxh() const { return m_boxh; }
     inline const char * modeName() const { return m_modeName; }
-    inline char *activeOffset() const { return m_activeOffset; }
-    inline int32_t pageSize() const { return m_cols*m_rows*2; }
+    inline uint8_t *activeOffset() const { return m_activeOffset; }
+    inline uint16_t pageSize() const { return m_cols * m_rows * 2; }
     inline uint8_t pageCount() const { return 1; }
 
     void setMode(int16_t newMode);

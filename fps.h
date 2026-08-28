@@ -2,7 +2,7 @@
   VGATEST
   Use at your own risk.
 
-  Copyright (C) 2019  Marco Bortolin
+  Copyright (C) 2019-2026  Marco Bortolin
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@ private:
     char buf[8];
     char bkbuf[8];
     clock_t t0, t1;
-    unsigned long frames;
+    uint16_t frames;
 
 public:
     FPS()
@@ -54,7 +54,7 @@ public:
         clock_t elapsed = t1 - t0;
         if(elapsed >= CLOCKS_PER_SEC) {
             t0 = t1;
-            fps = float(frames * CLOCKS_PER_SEC) / float(elapsed);
+            fps = float(uint32_t(frames) * CLOCKS_PER_SEC) / float(elapsed);
             frames = 0;
             return true;
         }

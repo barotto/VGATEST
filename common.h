@@ -2,7 +2,7 @@
   VGATEST
   Use at your own risk.
 
-  Copyright (C) 2019  Marco Bortolin
+  Copyright (C) 2019-2026  Marco Bortolin
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -23,6 +23,20 @@
 
 #include <dos.h>
 #include <stdint.h>
+
+#include "data.h"
+
+#ifdef __386__
+#define ADDR_A0000 ((uint8_t*)0xA0000)
+#define ADDR_B0000 ((uint8_t*)0xB0000)
+#define ADDR_B8000 ((uint8_t*)0xB8000)
+#define BIOS_DATA_AREA(_OFFSET_) (uint8_t*)(0x400+_OFFSET_)
+#else
+#define ADDR_A0000 (uint8_t*)MK_FP(0xA000,0x0000)
+#define ADDR_B0000 (uint8_t*)MK_FP(0xB000,0x0000)
+#define ADDR_B8000 (uint8_t*)MK_FP(0xB000,0x8000)
+#define BIOS_DATA_AREA(_OFFSET_) (uint8_t*)MK_FP(0x40,_OFFSET_)
+#endif
 
 typedef enum {
     k_ESC         = 27,

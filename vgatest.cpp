@@ -2,7 +2,7 @@
   VGATEST
   Use at your own risk.
 
-  Copyright (C) 2019  Marco Bortolin
+  Copyright (C) 2019-2026  Marco Bortolin
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -90,7 +90,11 @@ void putTitle()
               (" VGA modes test ", c_white)
               ("-", c_white)("-", c_lgray)("-", c_dgray);
 
-    text(text.rows()-1, 0)("Version: " VERSION, c_dgray);
+#ifdef __386__
+    text(text.rows()-1, 0)("Version: " VERSION " 32-bit", c_dgray);
+#else
+    text(text.rows()-1, 0)("Version: " VERSION " 16-bit", c_dgray);
+#endif
 }
 
 int main(int argc, char *argv[])
@@ -276,16 +280,15 @@ int main(int argc, char *argv[])
 
             int mode1 = -1;
             int mode2 = -1;
-            int mode = -1;
             do {
-                int mode = getHexFromKeyb(promptrow, promptcol);
-                if(mode == 0xFFFF) {
+                int vmode = getHexFromKeyb(promptrow, promptcol);
+                if(vmode == 0xFFFF) {
                     demo = 'q';
                     break;
                 }
-                gfx.setMode(mode);
+                gfx.setMode(vmode);
             } while(gfx.error());
-
+            
             switch(demo) {
                 case 'w':
                     demoWorm();

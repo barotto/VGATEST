@@ -2,7 +2,7 @@
   VGATEST
   Use at your own risk.
 
-  Copyright (C) 2019  Marco Bortolin
+  Copyright (C) 2019-2026  Marco Bortolin
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -33,8 +33,8 @@ class BenchRes
 {
 public:
     bool running;
-    double bandwidth;
-    double fps;
+    float bandwidth;
+    float fps;
 
     BenchRes() :
         running(true), bandwidth(.0), fps(.0) {}
@@ -42,7 +42,7 @@ public:
         running(false), bandwidth(_bw), fps(_fps) {}
 };
 
-typedef BenchRes(*pt2MemBenchFn)(uint32_t, uint32_t, uint8_t*);
+typedef BenchRes(*pt2MemBenchFn)(uint16_t, uint16_t, uint8_t*);
 
 double toMBps(uint32_t bytes, double us)
 {
@@ -53,7 +53,8 @@ double toMBps(uint32_t bytes, double us)
     }
 }
 
-BenchRes mem_write_32(uint32_t bwbytes, uint32_t pagebytes, uint8_t *memoff)
+#ifdef __386__
+BenchRes mem_write_32(uint16_t bwbytes, uint16_t pagebytes, uint8_t *memoff)
 {
     uint32_t rept = bwbytes / 4;
     ZTimerOn();
@@ -65,7 +66,7 @@ BenchRes mem_write_32(uint32_t bwbytes, uint32_t pagebytes, uint8_t *memoff)
     };
     ZTimerOff();
 
-    rept = pagebytes / 4;
+    rept = (pagebytes >> 2) + 1;
     FPS fps;
     while(!fps.tick()) {
         _asm {
@@ -76,10 +77,10 @@ BenchRes mem_write_32(uint32_t bwbytes, uint32_t pagebytes, uint8_t *memoff)
         };
     }
 
-    return BenchRes(toMBps(bwbytes, zTimeToUs()), fps.fps);
+    return BenchRes(toMBps(bwbytes, ZTimeToUs()), fps.fps);
 }
 
-BenchRes mem_write_16(uint32_t bwbytes, uint32_t pagebytes, uint8_t *memoff)
+BenchRes mem_write_16(uint16_t bwbytes, uint16_t pagebytes, uint8_t *memoff)
 {
     uint32_t rept = bwbytes / 2;
     ZTimerOn();
@@ -91,7 +92,7 @@ BenchRes mem_write_16(uint32_t bwbytes, uint32_t pagebytes, uint8_t *memoff)
     };
     ZTimerOff();
 
-    rept = pagebytes / 2;
+    rept = (pagebytes >> 1) + 1;
     FPS fps;
     while(!fps.tick()) {
         _asm {
@@ -102,15 +103,72 @@ BenchRes mem_write_16(uint32_t bwbytes, uint32_t pagebytes, uint8_t *memoff)
         };
     }
 
-    return BenchRes(toMBps(bwbytes, zTimeToUs()), fps.fps);
+    return BenchRes(toMBps(bwbytes, ZTimeToUs()), fps.fps);
 }
 
-BenchRes mem_write_8(uint32_t bwbytes, uint32_t pagebytes, uint8_t *memoff)
+BenchRes mem_write_8(uint16_t bwbytes, uint16_t pagebytes, uint8_t *memoff)
 {
+    uint32_t rept = bwbytes;
     ZTimerOn();
     _asm {
         mov edi, memoff
-        mov ecx, bwbytes
+        mov ecx, rept
+        cld
+        rep stosb
+    };
+    ZTimerOff();
+
+    rept = uint32_t(pagebytes) + 1;
+    FPS fps;
+    while(!fps.tick()) {
+        _asm {
+            mov edi, memoff
+            mov ecx, rept
+            cld
+            rep stosb
+        };
+    }
+
+    return BenchRes(toMBps(bwbytes, ZTimeToUs()), fps.fps);
+}
+#else
+BenchRes mem_write_32(uint16_t bwbytes, uint16_t pagebytes, uint8_t *memoff)
+{
+    return BenchRes(0,0);
+}
+
+BenchRes mem_write_16(uint16_t bwbytes, uint16_t pagebytes, uint8_t *memoff)
+{
+    uint16_t rept = bwbytes / 2;
+    ZTimerOn();
+    _asm {
+        les di, memoff
+        mov cx, rept
+        cld
+        rep stosw
+    };
+    ZTimerOff();
+
+    rept = (pagebytes >> 1) + 1;
+    FPS fps;
+    while(!fps.tick()) {
+        _asm {
+            les di, memoff
+            mov cx, rept
+            cld
+            rep stosw
+        };
+    }
+
+    return BenchRes(toMBps(bwbytes, ZTimeToUs()), fps.fps);
+}
+
+BenchRes mem_write_8(uint16_t bwbytes, uint16_t pagebytes, uint8_t *memoff)
+{
+    ZTimerOn();
+    _asm {
+        les di, memoff
+        mov cx, bwbytes
         cld
         rep stosb
     };
@@ -119,17 +177,20 @@ BenchRes mem_write_8(uint32_t bwbytes, uint32_t pagebytes, uint8_t *memoff)
     FPS fps;
     while(!fps.tick()) {
         _asm {
-            mov edi, memoff
-            mov ecx, pagebytes
+            les di, memoff
+            mov cx, pagebytes
             cld
             rep stosb
+            stosb // pagebytes is off by 1
         };
     }
 
-    return BenchRes(toMBps(bwbytes, zTimeToUs()), fps.fps);
+    return BenchRes(toMBps(bwbytes, ZTimeToUs()), fps.fps);
 }
+#endif
 
-BenchRes mem_read_32(uint32_t bwbytes, uint32_t pagebytes, uint8_t *memoff)
+#ifdef __386__
+BenchRes mem_read_32(uint16_t bwbytes, uint16_t pagebytes, uint8_t *memoff)
 {
     uint32_t rept = bwbytes / 4;
     ZTimerOn();
@@ -141,7 +202,7 @@ BenchRes mem_read_32(uint32_t bwbytes, uint32_t pagebytes, uint8_t *memoff)
     };
     ZTimerOff();
 
-    rept = pagebytes / 4;
+    rept = (pagebytes >> 2) + 1;
     FPS fps;
     while(!fps.tick()) {
         _asm {
@@ -152,10 +213,10 @@ BenchRes mem_read_32(uint32_t bwbytes, uint32_t pagebytes, uint8_t *memoff)
         };
     }
 
-    return BenchRes(toMBps(bwbytes, zTimeToUs()), fps.fps);
+    return BenchRes(toMBps(bwbytes, ZTimeToUs()), fps.fps);
 }
 
-BenchRes mem_read_16(uint32_t bwbytes, uint32_t pagebytes, uint8_t *memoff)
+BenchRes mem_read_16(uint16_t bwbytes, uint16_t pagebytes, uint8_t *memoff)
 {
     uint32_t rept = bwbytes / 2;
     ZTimerOn();
@@ -167,7 +228,7 @@ BenchRes mem_read_16(uint32_t bwbytes, uint32_t pagebytes, uint8_t *memoff)
     };
     ZTimerOff();
 
-    rept = pagebytes / 2;
+    rept = (pagebytes >> 1) + 1;
     FPS fps;
     while(!fps.tick()) {
         _asm {
@@ -178,15 +239,73 @@ BenchRes mem_read_16(uint32_t bwbytes, uint32_t pagebytes, uint8_t *memoff)
         };
     }
 
-    return BenchRes(toMBps(bwbytes, zTimeToUs()), fps.fps);
+    return BenchRes(toMBps(bwbytes, ZTimeToUs()), fps.fps);
 }
 
-BenchRes mem_read_8(uint32_t bwbytes, uint32_t pagebytes, uint8_t *memoff)
+BenchRes mem_read_8(uint16_t bwbytes, uint16_t pagebytes, uint8_t *memoff)
 {
+    uint32_t rept = bwbytes;
     ZTimerOn();
     _asm {
         mov esi, memoff
-        mov ecx, bwbytes
+        mov ecx, rept
+        cld
+        rep lodsb
+    };
+    ZTimerOff();
+
+    rept = uint32_t(pagebytes) + 1;
+    FPS fps;
+    while(!fps.tick()) {
+        _asm {
+            mov esi, memoff
+            mov ecx, rept
+            cld
+            rep lodsb
+            lodsb
+        };
+    }
+
+    return BenchRes(toMBps(bwbytes, ZTimeToUs()), fps.fps);
+}
+#else
+BenchRes mem_read_32(uint16_t bwbytes, uint16_t pagebytes, uint8_t *memoff)
+{
+    return BenchRes(0,0);
+}
+
+BenchRes mem_read_16(uint16_t bwbytes, uint16_t pagebytes, uint8_t *memoff)
+{
+    uint16_t rept = bwbytes / 2;
+    ZTimerOn();
+    _asm {
+        les si, memoff
+        mov cx, rept
+        cld
+        rep lodsw
+    };
+    ZTimerOff();
+
+    rept = (pagebytes >> 1) + 1;
+    FPS fps;
+    while(!fps.tick()) {
+        _asm {
+            les si, memoff
+            mov cx, rept
+            cld
+            rep lodsw
+        };
+    }
+
+    return BenchRes(toMBps(bwbytes, ZTimeToUs()), fps.fps);
+}
+
+BenchRes mem_read_8(uint16_t bwbytes, uint16_t pagebytes, uint8_t *memoff)
+{
+    ZTimerOn();
+    _asm {
+        les si, memoff
+        mov cx, bwbytes
         cld
         rep lodsb
     };
@@ -195,16 +314,17 @@ BenchRes mem_read_8(uint32_t bwbytes, uint32_t pagebytes, uint8_t *memoff)
     FPS fps;
     while(!fps.tick()) {
         _asm {
-            mov esi, memoff
-            mov ecx, pagebytes
+            les si, memoff
+            mov cx, pagebytes
             cld
             rep lodsb
+            lodsb
         };
     }
 
-    return BenchRes(toMBps(bwbytes, zTimeToUs()), fps.fps);
+    return BenchRes(toMBps(bwbytes, ZTimeToUs()), fps.fps);
 }
-
+#endif
 
 void demoMemBenchWriteResults(BenchRes results[6], bool gfxmode)
 {
@@ -248,6 +368,8 @@ void demoMemBenchWriteResults(BenchRes results[6], bool gfxmode)
     for(int r=0; r<6; r++) {
         if(results[r].running) {
             snprintf(buf, 50, testStrings[r], "wait...");
+        } else if(results[r].bandwidth == 0.0) {
+            snprintf(buf, 50, testStrings[r], "n/a");
         } else if(isnan(results[r].bandwidth)) {
             snprintf(buf, 50, testStrings[r], "NaN");
         } else {
@@ -265,24 +387,32 @@ void demoMemBenchWriteResults(BenchRes results[6], bool gfxmode)
 
 void demoMemBench(bool gfxmode)
 {
-    uint32_t pagebytes, bwbytes = 32000;
+    uint16_t pagebytes;
     uint8_t *offset;
+#ifdef __386__
+    const uint16_t bwbytes = 32000;
+#else
+    // keep it small, or slow CPUs will make the timer overflow 
+    const uint16_t bwbytes = 8000;
+#endif
 
 repeat:
     if(gfxmode) {
         gfx.setVisiblePage(0);
         gfx.setActivePage(1);
         offset = gfx.activeOffset();
-        pagebytes = gfx.pageSize();
-        if(!gfx.chained()) {
-            pagebytes /= 4;
+        if(gfx.planar()) {
+            pagebytes = gfx.pageSize() >> 2;
+        } else {
+            pagebytes = gfx.pageSize();
         }
     } else {
         text.setVisiblePage(0);
         text.setActivePage(1);
-        offset = (uint8_t*)text.activeOffset();
+        offset = text.activeOffset();
         pagebytes = text.pageSize();
     }
+    pagebytes -= 1;
 
     BenchRes results[6];
     demoMemBenchWriteResults(results, gfxmode);
@@ -302,8 +432,11 @@ repeat:
         } else {
             text.setActivePage(1);
         }
-        ztimercount = 0;
+        zTimerCount = 0;
         results[f] = benchFunctions[f](bwbytes, pagebytes, offset);
+        if(gfxmode && gfx.planar()) {
+            results[f].fps /= 4;
+        }
         demoMemBenchWriteResults(results, gfxmode);
     }
     if(gfxmode) {
@@ -312,7 +445,7 @@ repeat:
         text(text.rows()-2,1)("ESC to exit, R to repeat", c_green);
     }
     char ch = getch();
-    if(ch == 114) {
+    if(ch == 'r') {
         // a goto! the horror!
         goto repeat;
     }

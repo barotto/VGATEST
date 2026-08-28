@@ -2,7 +2,7 @@
   VGATEST
   Use at your own risk.
 
-  Copyright (C) 2019  Marco Bortolin
+  Copyright (C) 2019-2026  Marco Bortolin
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -55,7 +55,7 @@ TextScreen::TextScreen()
             m_boxh = 16;
             m_crtc_addr = CRTC_ADDR_COL;
             m_isr1_addr = ISR1_ADDR_COL;
-            m_textPage = ((char *)0xb8000);
+            m_textPage = ADDR_B8000;
             break;
         case 2:
         case 3:
@@ -69,7 +69,7 @@ TextScreen::TextScreen()
             m_boxh = 16;
             m_crtc_addr = CRTC_ADDR_COL;
             m_isr1_addr = ISR1_ADDR_COL;
-            m_textPage = ((char *)0xb8000);
+            m_textPage = ADDR_B8000;
             break;
         case 7:
             m_resetModeFn = setMode_b80x25_9x16_07h;
@@ -82,7 +82,7 @@ TextScreen::TextScreen()
             m_boxh = 16;
             m_crtc_addr = CRTC_ADDR_MONO;
             m_isr1_addr = ISR1_ADDR_MONO;
-            m_textPage = ((char *)0xb0000);
+            m_textPage = ADDR_B8000;
             break;
         default:
             m_resetModeFn = NULL;
@@ -145,7 +145,7 @@ void TextScreen::setMode(int16_t mode)
     erasePage(c_black, c_black);
 }
 
-int32_t TextScreen::getPageOffset(uint8_t page)
+uint16_t TextScreen::getPageOffset(uint8_t page)
 {
     return (page % pageCount()) * pageSize();
 }
@@ -157,7 +157,7 @@ void TextScreen::setActivePage(uint8_t page)
 
 void TextScreen::setVisiblePage(uint8_t page)
 {
-    int32_t offset = getPageOffset(page);
+    uint16_t offset = getPageOffset(page);
 
     // wait for display disable
     while(inp(m_isr1_addr) & 0x01);
@@ -283,8 +283,12 @@ void TextScreen::moveCursor(int row, int col, uint8_t fg, uint8_t bg)
     rg.h.dh = row;
     rg.h.bh = 0;
 
+#ifdef __386__
     int386(0x10, &rg, &rg);
-
+#else
+    int86(0x10, &rg, &rg);
+#endif
+    
     *(m_activeOffset + ((row * m_cols) << 1) + (col << 1) + 1) = mkTextColor(fg, bg);
 
     m_curFgColor = fg;
@@ -299,7 +303,7 @@ void TextScreen::erasePage()
 void TextScreen::erasePage(uint8_t fg, uint8_t bg)
 {
     uint8_t color = mkTextColor(fg, bg);
-    char *ch = m_activeOffset;
+    uint8_t *ch = m_activeOffset;
 
     for (int i = 0; i < (m_rows * m_cols); i++) {
         *ch++ = ' ';
@@ -345,7 +349,7 @@ void TextScreen::write(int row, int col, const char *text, uint8_t fg, uint8_t b
     uint8_t color = mkTextColor(fg, bg);
     char t = *text++;
     while(t) {
-        char *ch = m_activeOffset + ((m_curRow * m_cols) << 1) + (m_curCol << 1);
+        uint8_t *ch = m_activeOffset + ((m_curRow * m_cols) << 1) + (m_curCol << 1);
         if(t == '\n') {
             m_curRow = (m_curRow + 1) % m_rows;
             m_curCol = m_prevCol;
@@ -419,7 +423,11 @@ void setScanlines(int scanlines)
         default:
             return;
     }
+#ifdef __386__
     int386(0x10, &rg, &rg);
+#else
+    int86(0x10, &rg, &rg);
+#endif
 }
 
 void setBIOSFont(int map, int size, bool activate=false)
@@ -443,65 +451,25 @@ void setBIOSFont(int map, int size, bool activate=false)
     if(activate) {
         rg.h.al |= 0x10;
     }
+#ifdef __386__
     int386(0x10, &rg, &rg);
+#else
+    int86(0x10, &rg, &rg);
+#endif
 }
-
-static uint8_t font8x16[8][16] = {
-  {0x81,0x00,0x3C,0x42,0x42,0x42,0x42,0x00,0x42,0x42,0x42,0x42,0x3C,0x00,0x00,0x81},
-  {0x81,0x00,0x00,0x02,0x02,0x02,0x02,0x00,0x02,0x02,0x02,0x02,0x00,0x00,0x00,0x81},
-  {0x81,0x00,0x3C,0x02,0x02,0x02,0x02,0x3C,0x40,0x40,0x40,0x40,0x3C,0x00,0x00,0x81},
-  {0x81,0x00,0x3C,0x02,0x02,0x02,0x02,0x3C,0x02,0x02,0x02,0x02,0x3C,0x00,0x00,0x81},
-  {0x81,0x00,0x00,0x42,0x42,0x42,0x42,0x3C,0x02,0x02,0x02,0x02,0x00,0x00,0x00,0x81},
-  {0x81,0x00,0x3C,0x40,0x40,0x40,0x40,0x3C,0x02,0x02,0x02,0x02,0x3C,0x00,0x00,0x81},
-  {0x81,0x00,0x3C,0x40,0x40,0x40,0x40,0x3C,0x42,0x42,0x42,0x42,0x3C,0x00,0x00,0x81},
-  {0x81,0x00,0x3C,0x02,0x02,0x02,0x02,0x00,0x02,0x02,0x02,0x02,0x00,0x00,0x00,0x81},
-};
-
-static uint8_t font8x14[8][14] = {
-  {0x81,0x3C,0x42,0x42,0x42,0x42,0x00,0x42,0x42,0x42,0x42,0x3C,0x00,0x81},
-  {0x81,0x00,0x02,0x02,0x02,0x02,0x00,0x02,0x02,0x02,0x02,0x00,0x00,0x81},
-  {0x81,0x3C,0x02,0x02,0x02,0x02,0x3C,0x40,0x40,0x40,0x40,0x3C,0x00,0x81},
-  {0x81,0x3C,0x02,0x02,0x02,0x02,0x3C,0x02,0x02,0x02,0x02,0x3C,0x00,0x81},
-  {0x81,0x00,0x42,0x42,0x42,0x42,0x3C,0x02,0x02,0x02,0x02,0x00,0x00,0x81},
-  {0x81,0x3C,0x40,0x40,0x40,0x40,0x3C,0x02,0x02,0x02,0x02,0x3C,0x00,0x81},
-  {0x81,0x3C,0x40,0x40,0x40,0x40,0x3C,0x42,0x42,0x42,0x42,0x3C,0x00,0x81},
-  {0x81,0x3C,0x02,0x02,0x02,0x02,0x00,0x02,0x02,0x02,0x02,0x00,0x00,0x81},
-};
-
-static uint8_t font8x8[8][8] = {
-  {0x99,0x24,0x24,0x00,0x24,0x24,0x18,0x81},
-  {0x81,0x04,0x04,0x00,0x04,0x04,0x00,0x81},
-  {0x99,0x04,0x04,0x18,0x20,0x20,0x18,0x81},
-  {0x99,0x04,0x04,0x18,0x04,0x04,0x18,0x81},
-  {0x81,0x24,0x24,0x18,0x04,0x04,0x00,0x81},
-  {0x99,0x20,0x20,0x18,0x04,0x04,0x18,0x81},
-  {0x99,0x20,0x20,0x18,0x24,0x24,0x18,0x81},
-  {0x99,0x04,0x04,0x00,0x04,0x04,0x00,0x81},
-};
-
-static int map_offset[8] = {
-    0x0000, // map 0
-    0x4000, // map 1
-    0x8000, // map 2
-    0xc000, // map 3
-    0x2000, // map 4
-    0x6000, // map 5
-    0xa000, // map 6
-    0xe000  // map 7
-};
 
 void setCustomFonts(int from_map, int size)
 {
     uint8_t *font;
     switch(size) {
         case 8:
-            font = &font8x8[0][0];
+            font = &DATA_FONT_8x8[0][0];
             break;
         case 14:
-            font = &font8x14[0][0];
+            font = &DATA_FONT_8x14[0][0];
             break;
         case 16:
-            font = &font8x16[0][0];
+            font = &DATA_FONT_8x16[0][0];
             break;
         default:
             return;
@@ -533,11 +501,31 @@ void setCustomFonts(int from_map, int size)
     GCR_OUT(GCR_MISC, 0x04);        // GCR: CPU memory window A0000-AFFFF
 
     // Copy fonts in VGA memory plane 2
-    for(int map=from_map; map<8; map++) {
-        for(int i=0; i<256; i++) {
-            memcpy((uint8_t*)(0xa0000 + map_offset[map] + i*32), font+(size*map), size);
+    const int map_offset[8] = {
+        0x0000, // map 0
+        0x4000, // map 1
+        0x8000, // map 2
+        0xc000, // map 3
+        0x2000, // map 4
+        0x6000, // map 5
+        0xa000, // map 6
+        0xe000  // map 7
+    };
+    
+#ifdef __386__
+    for(int map = from_map; map < 8; map++) {
+        for(int i = 0; i < 256; i++) {
+            memcpy(ADDR_A0000 + map_offset[map] + i*32, font + (size*map), size);
         }
     }
+#else
+    for(int map = from_map; map < 8; map++) {
+        uint8_t *ptr = (uint8_t*)MK_FP(0xA000, map_offset[map]);
+        for(int i = 0; i < 256; i++) {
+            memcpy(ptr + i*32, font + (size*map), size);
+        }
+    }
+#endif
 
     // Restore registers
     SEQ_OUT(SEQ_MAPMASK, seq_map_mask);
@@ -588,12 +576,12 @@ void TextScreen::setMode(int bios, int cols, int rows, int boxw, int boxh)
         case 7:
             m_crtc_addr = CRTC_ADDR_MONO;
             m_isr1_addr = ISR1_ADDR_MONO;
-            m_textPage = ((char *)0xb0000);
+            m_textPage = ADDR_B0000;
             break;
         default:
             m_crtc_addr = CRTC_ADDR_COL;
             m_isr1_addr = ISR1_ADDR_COL;
-            m_textPage = ((char *)0xb8000);
+            m_textPage = ADDR_B8000;
             break;
     }
     m_activeOffset = m_textPage;
@@ -645,8 +633,8 @@ void TextScreen::setMode_640x480(int boxh)
     mor |= 0xC4;
     outp(MOR_ADDR, mor);
 
-    *(uint16_t*)(0x400+0x4c) = 8192;        // Change page size in bytes
-    *(uint8_t*)(0x400+0x84) = textlines-1;  // Change page number of lines (less 1)
+    *(uint16_t*)(BIOS_DATA_AREA(0x4C)) = 8192; // Change page size in bytes
+    *(BIOS_DATA_AREA(0x84)) = textlines - 1;   // Change page number of lines (minus 1)
 
     // Select Alternate Print Screen Handler
     /* On older PCs, XTs, and ATs, the default ROM-BIOS print-screen
@@ -660,13 +648,17 @@ void TextScreen::setMode_640x480(int boxh)
     union REGS rg;
     rg.h.ah = 0x12;
     rg.h.bl = 0x20;
+#ifdef __386__
     int386(0x10, &rg, &rg);
+#else
+    int86(0x10, &rg, &rg);
+#endif
 
     setBIOSFont(0, boxh);
     setBIOSFont(1, boxh);
     setCustomFonts(2, boxh);
 
-    m_textPage = ((char *)0xb8000);
+    m_textPage = ADDR_B8000;
     m_activeOffset = m_textPage;
     m_cols = 80;
     m_rows = textlines;

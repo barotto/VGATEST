@@ -2,7 +2,7 @@
   VGATEST
   Use at your own risk.
 
-  Copyright (C) 2019  Marco Bortolin
+  Copyright (C) 2019-2026  Marco Bortolin
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -36,7 +36,7 @@ class GfxScreen
 private:
     uint8_t m_error;          // the last error
     uint8_t m_origMode;       // the original video mode
-    uint8_t far *m_fontAddr;  // address of the current font
+    uint8_t far *m_fontAddr;      // address of the current font
     uint8_t m_fontHeight;
     uint8_t *m_videoMem;
     uint8_t *m_activeOffset;  // address of the active page
@@ -58,9 +58,10 @@ private:
     uint8_t m_cmap[256];
     uint8_t m_overscanColor;
 
-    void (GfxScreen::*m_clearFn)(int row, int lines, uint8_t color);
+    // the order of declaration matters on Open Watcom 1.9 for DOS / 16-bit / huge
     void (GfxScreen::*m_putPixelFn)(int16_t x, int16_t y, uint8_t color);
     int16_t (GfxScreen::*m_getPixelFn)(int16_t x, int16_t y);
+    void (GfxScreen::*m_clearFn)(int row, int lines, uint8_t color);
     void (GfxScreen::*m_drawTextFn)(int16_t x, int16_t y, uint8_t color, const char *string);
 
     int32_t getPageOffset(uint8_t page);
@@ -79,7 +80,7 @@ public:
     inline int32_t lineOffset() const { return m_lineOffset; }
     inline int32_t lineSize() const { return m_lineSize; }
     inline int32_t pageSize() const { return m_pageSize; }
-    inline bool  chained()    const { return m_chained; }
+    inline bool  planar()     const { return !m_chained; }
     inline char *modeName()   const { return m_modeName; }
     inline int16_t colors()   const { return m_colors; }
     inline uint8_t fontHeight()    const { return m_fontHeight; }
@@ -128,8 +129,7 @@ public:
     void wait_disp_enable();
 
 private:
-    // routines to set the modes
-    // BIOS
+    // BIOS modes
     void mode_b320x200_04h();
     void mode_b640x200_06h();
     void mode_b320x200_0Dh();
@@ -138,7 +138,7 @@ private:
     void mode_b640x350_10h();
     void mode_b640x480_12h();
     void mode_b320x200_13h();
-    // Tweaked
+    // Tweaked 256-color modes
     void mode_t160x120();
     void mode_t256x256_Q();
     void mode_t296x220();
@@ -150,7 +150,7 @@ private:
     void mode_t360x480();
     void mode_t400x300();
 
-    void clear_odd_even(int row, int lines, uint32_t color);
+    void clear_odd_even(int row, int lines, uint8_t color);
     void clear1(int row, int lines, uint8_t color);
     void clear2(int row, int lines, uint8_t color);
     void clear4(int row, int lines, uint8_t color);

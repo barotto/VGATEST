@@ -4,10 +4,11 @@
  * See Michael Abrash's Graphics Programming Black Book, Chapter 3
  */
 
-extern uint32_t ztimercount; // if > 2^16-1 then overflow happened (time elapsed > 53ms)
-extern uint16_t ztimerref;
+extern uint16_t zTimerCount;
+extern uint8_t zTimerOverflow; // if > 0 then overflow happened (time elapsed > 53ms)
+extern uint16_t zTimerRef;
 
-double zTimeToUs();
+double ZTimeToUs();
 
 #define DELAY "db 0xeb,0,0xeb,0,0xeb,0" // 3 x jmp $+2
 
@@ -37,14 +38,14 @@ modify [ax]
 
 extern void ZTimerOff();
 #pragma aux ZTimerOff = \
-"xor  eax, eax" \
+"xor  ax, ax"   \
 "out  0x43, al" \
 "mov  al, 0xA " \
 "out  0x20, al" \
 DELAY           \
 "in   al, 0x20" \
 "and  al, 1"    \
-"shl  eax, 16"  \
+"mov  zTimerOverflow, al" \
 \
 "sti"           \
 "in   al, 0x40" \
@@ -53,7 +54,7 @@ DELAY           \
 "in   al, 0x40" \
 "xchg ah, al"   \
 "neg  ax"       \
-"mov  ztimercount, eax" \
+"mov  zTimerCount, ax" \
 \
 "mov   bx, 0"   \
 "mov   cx, 16"  \
@@ -83,6 +84,7 @@ DELAY           \
 \
 "sti"           \
 "add  bx, 8"    \
-"shr  bx, 4"    \
-"mov  ztimerref, bx" \
-modify [eax bx cx]
+"mov  cl, 4"    \
+"shr  bx, cl"   \
+"mov  zTimerRef, bx" \
+modify [ax bx cx]

@@ -1,8 +1,13 @@
 *.exe
+*.EXE
+*.map
 *.o
 *~
 *.fnt
-dosbox.conf
+dosbox*
 /.cproject
 /.project
 /.settings/
+/other/
+/release/
+VERSION

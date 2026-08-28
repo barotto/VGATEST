@@ -2,7 +2,7 @@
   VGATEST
   Use at your own risk.
 
-  Copyright (C) 2019  Marco Bortolin
+  Copyright (C) 2019-2026  Marco Bortolin
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -343,10 +343,10 @@ void demoPalette()
         int h = gfx.height()/16;
         for(int y=0; y<16; y++) {
             for(int x=0; x<16; x++) {
-                if(gfx.chained()) {
-                    gfx.fillRect8chained(x*w, y*h, w, h, y*16+x);
-                } else {
+                if(gfx.planar()) {
                     gfx.fillRect8(x*w, y*h, w, h, y*16+x);
+                } else {
+                    gfx.fillRect8chained(x*w, y*h, w, h, y*16+x);
                 }
             }
         }
@@ -467,10 +467,10 @@ void demoGfxSpitscreen()
         int h = gfx.height()/16;
         for(int y=0; y<16; y++) {
             for(int x=0; x<16; x++) {
-                if(gfx.chained()) {
-                    gfx.fillRect8chained(x*w, y*h, w, h, y*16+x);
-                } else {
+                if(gfx.planar()) {
                     gfx.fillRect8(x*w, y*h, w, h, y*16+x);
+                } else {
+                    gfx.fillRect8chained(x*w, y*h, w, h, y*16+x);
                 }
             }
         }

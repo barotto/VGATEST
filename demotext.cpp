@@ -2,7 +2,7 @@
   VGATEST
   Use at your own risk.
 
-  Copyright (C) 2019  Marco Bortolin
+  Copyright (C) 2019-2026  Marco Bortolin
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -233,9 +233,8 @@ void demoTextFontMaps()
     text.setColor(c_lgray,c_black);
 
     bool exit = false;
-    int mapA = 0;
-    int mapAsel = 0;
-    int mapCount = 8;
+    uint16_t mapA = 0;
+    uint16_t mapAsel = 0;
     snprintf(buf, 2, "%d", mapA);
     text(mapselR,mapselC)(buf);
 
@@ -245,12 +244,13 @@ void demoTextFontMaps()
             case k_ESC:
                 exit = true;
                 break;
-            case 48: case 49: case 50: case 51: case 52: case 53: case 54: case 55:
+            case '0': case '1': case '2': case '3':
+            case '4': case '5': case '6': case '7':
             {
                 // switch between maps
-                mapA = ch-48;
+                mapA = ch - '0';
                 if(mapA > 3) {
-                    mapAsel = ((mapA&3) << 2) | 0x20;
+                    mapAsel = ((mapA & 3) << 2) | 0x20;
                 } else {
                     mapAsel = (mapA << 2);
                 }

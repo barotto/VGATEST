@@ -2,7 +2,7 @@
   VGATEST
   Use at your own risk.
 
-  Copyright (C) 2019  Marco Bortolin
+  Copyright (C) 2019-2026  Marco Bortolin
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -29,11 +29,6 @@
 #include "utils.h"
 #include "gs.h"
 
-#define VGA_ADDR ((uint8_t *) 0xa0000)
-#define CGA_ADDR ((uint8_t *) 0xb8000)
-
-int32_t SIN_ACOS[1024];
-
 
 GfxScreen::GfxScreen()
 {
@@ -47,7 +42,7 @@ GfxScreen::GfxScreen()
 
     m_fontAddr = NULL;
     m_fontHeight = 14;
-    m_videoMem = VGA_ADDR;
+    m_videoMem = ADDR_A0000;
     m_activeOffset = 0;
     m_maxx = 0;
     m_maxy = 0;
@@ -68,11 +63,6 @@ GfxScreen::GfxScreen()
     m_getPixelFn = NULL;
     m_clearFn = NULL;
     m_drawTextFn = NULL;
-
-    // precompute the sin(arccos(x)) table for circles
-    for(int i=0;i<1024;i++) {
-        SIN_ACOS[i] = sin(acos((float)i/1024))*0x10000L;
-    }
 }
 
 GfxScreen::~GfxScreen()
@@ -83,7 +73,7 @@ void GfxScreen::setMode(int16_t mode)
 {
     m_error = e_none;
     m_modeName = NULL;
-    m_videoMem = VGA_ADDR;
+    m_videoMem = ADDR_A0000;
     
     switch (mode)
     {
@@ -156,12 +146,17 @@ void GfxScreen::resetMode()
     m_drawTextFn = NULL;
 }
 
-void GfxScreen::clear_odd_even(int row, int lines, uint32_t color)
+void GfxScreen::clear_odd_even(int row, int lines, uint8_t color)
 {
     /* address section differs depending on odd/even scanline */
     uint8_t *even_ptr = m_activeOffset;
     uint8_t *odd_ptr = m_activeOffset + 0x2000;
     
+#ifdef __386__
+    uint32_t c = (color << 24) | (color << 16) | (color << 8) | color;
+#else
+    uint16_t c = (color << 8) | color;
+#endif
     while(lines--) {
         int y = row + lines;
         int bank_line = y / 2;
@@ -171,26 +166,23 @@ void GfxScreen::clear_odd_even(int row, int lines, uint32_t color)
         } else {
             base = even_ptr;
         }
-        fillLong(base + (m_lineSize * bank_line), color, m_lineSize/4);
+#ifdef __386__
+        fillLong(base + (m_lineSize * bank_line), c, m_lineSize >> 2);
+#else
+        fillWord(base + (m_lineSize * bank_line), c, m_lineSize >> 1);
+#endif
     }
 }
 
 void GfxScreen::clear1(int row, int lines, uint8_t color)
 {
-    uint32_t c = 0;
-    if(color & 1) {
-        c = 0xffffffff;
-    }
-    
-    clear_odd_even(row, lines, c);
+    clear_odd_even(row, lines, color & 1 ? 0xFF : 0);
 }
 
 void GfxScreen::clear2(int row, int lines, uint8_t color)
 {
     color &= 3;
-    uint32_t c = color | (color << 2) | (color << 4) | (color << 6);
-    c = (c << 8) | c;
-    c = (c << 16) | c;
+    uint8_t c = color | (color << 2) | (color << 4) | (color << 6);
 
     clear_odd_even(row, lines, c);
 }
@@ -213,8 +205,12 @@ void GfxScreen::clear4(int row, int lines, uint8_t color)
     GCR_OUT(GCR_BITMASK, 0xff);
 
     // since set/reset is enabled for all planes, the written value is ignored
+#ifdef __386__
     fillLong(m_activeOffset + (m_lineSize * row), 0, (m_lineSize*lines)/4);
-
+#else
+    fillWord(m_activeOffset + (m_lineSize * row), 0, (m_lineSize >> 1) * lines);
+#endif
+    
     // disable set/reset
     GCR_OUT(GCR_EN_SETRESET, 0x00);
 
@@ -223,25 +219,27 @@ void GfxScreen::clear4(int row, int lines, uint8_t color)
 
 void GfxScreen::clear8(int row, int lines, uint8_t color)
 {
-    uint32_t c = color;
-    c = (c << 8) | color;
-    c = (c << 8) | color;
-    c = (c << 8) | color;
-
     outp(SEQ_ADDR, 0x02);  // enable all planes
     outp(SEQ_DATA, 0x0F);
 
+#ifdef __386__
+    uint32_t c = (color << 24) | (color << 16) | (color << 8) | color;
     fillLong(m_activeOffset + (m_lineSize * row), c, (m_width*lines)/16);
+#else
+    uint16_t c = (color << 8) | color;
+    fillWord(m_activeOffset + (m_lineSize * row), c, (m_width >> 3) * lines);
+#endif
 }
 
 void GfxScreen::clear8chained(int row, int lines, uint8_t color)
 {
-    uint32_t c = color;
-    c = (c << 8) | color;
-    c = (c << 8) | color;
-    c = (c << 8) | color;
-
+#ifdef __386__
+    uint32_t c = (color << 24) | (color << 16) | (color << 8) | color;
     fillLong(m_activeOffset + (m_lineSize * row), c, (m_width*lines)/4);
+#else
+    uint16_t c = (color << 8) | color;
+    fillWord(m_activeOffset + (m_lineSize * row), c, (m_width >> 1) * lines);
+#endif
 }
 
 void GfxScreen::clear(uint8_t color)
@@ -317,7 +315,7 @@ void GfxScreen::putPixel4(int16_t x, int16_t y, uint8_t color)
     outp(GCR_ADDR, GCR_BITMASK);
     outp(GCR_DATA, bitmask);
 
-    int offset = y*m_lineSize + x/8;
+    uint16_t offset = y * m_lineSize + (x >> 3);
     volatile uint8_t dummy = *(m_activeOffset + offset); // load latches
     *(m_activeOffset + offset) = color % 16;
 }
@@ -484,7 +482,7 @@ void GfxScreen::drawCircle(int16_t cx, int16_t cy, int16_t r, uint8_t color)
         putPixel(cx+dy, cy+dx, color); // octant 7
         dx++;
         n += invradius;
-        dy = (int16_t)((r * SIN_ACOS[(int16_t)(n>>6)]) >> 16);
+        dy = (int16_t)((r * DATA_SIN_ACOS[(int16_t)(n>>6)]) >> 16);
     }
 }
 
@@ -523,7 +521,7 @@ void GfxScreen::drawChar4(int16_t x, int16_t y, uint8_t color, char c)
     // Graphics Programming Black Book by Michael Abrash.
     // This function needs write mode 3
 
-    uint8_t* vga_offset = m_activeOffset + (y * m_lineSize) + x / 8;
+    uint8_t *vga_offset = m_activeOffset + (y * m_lineSize) + x / 8;
     uint8_t xbit = x & 7;
     uint8_t far *font = m_fontAddr + c * m_fontHeight;
 
@@ -698,6 +696,7 @@ void GfxScreen::fillRect8chained(int16_t x, int16_t y, int16_t width, int16_t he
         height = m_height - y;
     }
 
+#ifdef __386__
     uint32_t c = color;
     c = (c << 8) | color;
     c = (c << 8) | color;
@@ -714,6 +713,21 @@ void GfxScreen::fillRect8chained(int16_t x, int16_t y, int16_t width, int16_t he
         fillLong(lineptr, c, dwords);
         lineptr += linestep;
     }
+#else
+    uint16_t c = (color << 8) | color;
+
+    uint8_t *lineptr = m_activeOffset + (m_lineSize * y) + x;
+    int words = width / 2;
+    int bytes = width - (words * 2);
+    int linestep = words * 2 + (m_width - width);
+    for(int l=0; l<height; l++) {
+        for(int b=0; b<bytes; b++) {
+            *lineptr++ = color;
+        }
+        fillWord(lineptr, c, words);
+        lineptr += linestep;
+    }
+#endif
 }
 
 //---------------------------------------------------
@@ -856,7 +870,7 @@ void GfxScreen::mode_b320x200_04h()
 {
     setBIOSMode(0x04);
 
-    m_videoMem = CGA_ADDR;
+    m_videoMem = ADDR_B8000;
     m_width    = 320;
     m_height   = 200;
     m_scanlines = 400;
@@ -903,7 +917,7 @@ void GfxScreen::mode_b640x200_06h()
 {
     setBIOSMode(0x06);
 
-    m_videoMem = CGA_ADDR;
+    m_videoMem = ADDR_B8000;
     m_width    = 640;
     m_height   = 200;
     m_scanlines = 400;

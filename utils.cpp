@@ -2,7 +2,7 @@
   VGATEST
   Use at your own risk.
 
-  Copyright (C) 2019  Marco Bortolin
+  Copyright (C) 2019-2026  Marco Bortolin
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -30,7 +30,11 @@ bool isVga()
     union REGS rg;
     memset(&rg, 0, sizeof(rg));
     rg.w.ax = 0x1a00;
+#ifdef __386__
     int386(0x10, &rg, &rg);
+#else
+    int86(0x10, &rg, &rg);
+#endif
     return (rg.h.al == 0x1a);
 }
 
@@ -63,8 +67,11 @@ uint8_t getBIOSMode()
     union REGS rg;
     memset(&rg, 0, sizeof(rg));
     rg.h.ah = 0x0f;
+#ifdef __386__
     int386(0x10, &rg, &rg);
-
+#else
+    int86(0x10, &rg, &rg);
+#endif
     return rg.h.al;
 }
 
@@ -74,7 +81,11 @@ void setBIOSMode(uint8_t mode)
     memset(&rg, 0, sizeof(rg));
     rg.h.ah = 0x00;
     rg.h.al = mode;
+#ifdef __386__
     int386(0x10, &rg, &rg);
+#else
+    int86(0x10, &rg, &rg);
+#endif
 }
 
 void setVGARegisters(uint16_t baseAddr, const int16_t *regs)

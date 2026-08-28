@@ -3,7 +3,9 @@ VGATEST
 Simple DOS program used to test VGA functionality in both text and graphics
 modes.
 
-It can be compiled with Open Watcom and needs the DOS/4GW extender.
+It can be compiled using Open Watcom for:
+ * 32-bit DOS/4G (req. 80386 CPU and DOS/4GW extender)
+ * 16-bit DOS (req. 8086 CPU)
 
 Source code at https://github.com/barotto/VGATEST
 
@@ -209,5 +211,5 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
 Authors
 --------------------------------------------------------------------------------
-Copyright (C) 2019  Marco Bortolin
+Copyright (C) 2019-2026  Marco Bortolin
 Portions of code by Robert C. Pendleton and released in the public domain.
