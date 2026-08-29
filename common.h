@@ -96,28 +96,31 @@ VGA.
 Mode hex 3+ is the default mode with an analog color display attached to the
 system. Mode hex 7+ is the default mode with an analog monochrome display.
 Modes 0*, 1*, 2*, and 3* emulate the support provided by the EGA.
+Modes 0m, 1m, 2m, and 3m emulates the support provided by the MCGA.
 */
+
 enum textMode {
-    // BIOS
+    // BIOS (8x8 CGA / 8x14 EGA / 9x16 VGA / 9x14 MDA / 8x16 MCGA)
     t_b40x25_8x8_00h  = 0x00, //0  320x200  16  B800, same as mode 1
     t_b40x25_8x14_00h = 0xa0, //0* 320x350  16  B800, same as mode 1*
-    t_b40x25_8x16_00h = 0xb0, //   320x400  16  B800
+    t_b40x25_8x16_00h = 0xb0, //0m 320x400  16  B800, same as mode 1m
     t_b40x25_9x16_00h = 0xc0, //0+ 360x400  16  B800, same as mode 1+
-    t_b40x25_8x8_01h  = 0x01, //1  320x200  16  B800
-    t_b40x25_8x14_01h = 0xa1, //1* 320x350  16  B800
-    t_b40x25_8x16_01h = 0xb1, //   320x400  16  B800
-    t_b40x25_9x16_01h = 0xc1, //1+ 360x400  16  B800
+    t_b40x25_8x8_01h  = 0x01, //1  320x200  16  B800  CGA
+    t_b40x25_8x14_01h = 0xa1, //1* 320x350  16  B800  EGA
+    t_b40x25_8x16_01h = 0xb1, //1m 320x400  16  B800  MCGA
+    t_b40x25_9x16_01h = 0xc1, //1+ 360x400  16  B800  VGA
     t_b80x25_8x8_02h  = 0x02, //2  640x200  16  B800, same as mode 3
     t_b80x25_8x14_02h = 0xa2, //2* 640x350  16  B800, same as mode 3*
-    t_b80x25_8x16_02h = 0xb2, //   640x400  16  B800
+    t_b80x25_8x16_02h = 0xb2, //2m 640x400  16  B800, same as mode 3m
     t_b80x25_9x16_02h = 0xc2, //2+ 720x400  16  B800, same as mode 3+
-    t_b80x25_8x8_03h  = 0x03, //3  640x200  16  B800
-    t_b80x25_8x14_03h = 0xa3, //3* 640x350  16  B800
-    t_b80x25_8x16_03h = 0xb3, //   640x400  16  B800
-    t_b80x25_9x16_03h = 0xc3, //3+ 720x400  16  B800
-    t_b80x25_9x14_07h = 0x07, //7  720x350 mono B000
-    t_b80x25_9x16_07h = 0xa7, //7+ 720x400 mono B000
+    t_b80x25_8x8_03h  = 0x03, //3  640x200  16  B800  CGA
+    t_b80x25_8x14_03h = 0xa3, //3* 640x350  16  B800  EGA
+    t_b80x25_8x16_03h = 0xb3, //3m 640x400  16  B800  MCGA
+    t_b80x25_9x16_03h = 0xc3, //3+ 720x400  16  B800  VGA
+    t_b80x25_9x14_07h = 0x07, //7  720x350 mono B000  MDA mono
+    t_b80x25_9x16_07h = 0xa7, //7+ 720x400 mono B000  VGA mono
     // Tweaked
+    t_t40x30_8x8  = 0x11, // 320x240
     t_t80x43_8x8  = 0x1a, // 640x350
     t_t80x50_9x8  = 0x1b, // 720x400
     t_t80x28_9x14 = 0x1c, // 720x400
@@ -125,6 +128,7 @@ enum textMode {
     t_t80x34_8x14 = 0x1e, // 640x480
     t_t80x60_8x8  = 0x1f, // 640x480
 };
+
 enum videoModes {
     // BIOS modes
     v_b320x200_04h = 0x04,
@@ -194,6 +198,7 @@ enum videoModes {
 #define CRTC_END_VBLANK      0x16
 #define CRTC_MODE_CONTROL    0x17
 #define CRTC_LINE_COMPARE    0x18
+#define CRTC_REG(_VAL_,_REG_) ((_VAL_<<8)|_REG_)
 #define CRTC_OUT(_APORT_,_REG_,_VAL_) { outpw(_APORT_, ((_VAL_)<<8)|_REG_); }
 #define CRTC_OUT_COL(_REG_,_VAL_) { outpw(CRTC_ADDR_COL, ((_VAL_)<<8)|_REG_); }
 #define CRTC_IN(_APORT_,_REG_,_VAR_) { outp(_APORT_, _REG_); _VAR_ = inp(_APORT_+1); }

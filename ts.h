@@ -38,6 +38,7 @@ private:
     bool m_moved;
     int m_cols;      // the number of text columns
     int m_rows;      // the number of text rows
+    int m_lineSize;  // the size of the text line in bytes
     int m_width;     // the width in pixels
     int m_height;    // the height in pixels
     int m_scanlines; // the number of scanlines
@@ -58,6 +59,7 @@ private:
     void setMode_b80x25_9x16_03h();
     void setMode_b80x25_9x16_07h();
     void setMode_640x480(int boxh);
+    void setMode_320x240();
 
     uint16_t getPageOffset(uint8_t page);
 
@@ -70,6 +72,7 @@ public:
     inline int16_t error() const { return m_error; }
     inline int cols() const      { return m_cols; }
     inline int rows() const      { return m_rows; }
+    inline int lineSize() const  { return m_lineSize; }
     inline int width() const     { return m_width; }
     inline int height() const    { return m_height; }
     inline int scanlines() const { return m_scanlines; }
@@ -77,7 +80,7 @@ public:
     inline int boxh() const { return m_boxh; }
     inline const char * modeName() const { return m_modeName; }
     inline uint8_t *activeOffset() const { return m_activeOffset; }
-    inline uint16_t pageSize() const { return m_cols * m_rows * 2; }
+    inline uint16_t pageSize() const { return m_rows * m_lineSize; }
     inline uint8_t pageCount() const { return 1; }
 
     void setMode(int16_t newMode);

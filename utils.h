@@ -46,6 +46,11 @@ void fillLong(void *addr, uint32_t value, int32_t count);
     "cld" \
     "rep stosd" \
     parm [edi] [eax] [ecx];
+void fillWord(void *addr, uint16_t value, int32_t count);
+#pragma aux fillWord = \
+    "cld" \
+    "rep stosw" \
+    parm [edi] [ax] [ecx];
 #else
 void fillWord(void *addr, uint16_t value, uint16_t count);
 #pragma aux fillWord = \

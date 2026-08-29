@@ -48,6 +48,7 @@ TextScreen::TextScreen()
             m_resetModeFn = setMode_b40x25_9x16_01h;
             m_cols = 40;
             m_rows = 25;
+            m_lineSize = 80;
             m_width = 360;
             m_height = 400;
             m_scanlines = 400;
@@ -62,6 +63,7 @@ TextScreen::TextScreen()
             m_resetModeFn = setMode_b80x25_9x16_03h;
             m_cols = 80;
             m_rows = 25;
+            m_lineSize = 160;
             m_width = 720;
             m_height = 400;
             m_scanlines = 400;
@@ -75,6 +77,7 @@ TextScreen::TextScreen()
             m_resetModeFn = setMode_b80x25_9x16_07h;
             m_cols = 80;
             m_rows = 25;
+            m_lineSize = 160;
             m_width = 720;
             m_height = 400;
             m_scanlines = 400;
@@ -107,22 +110,23 @@ void TextScreen::setMode(int16_t mode)
     {
     case t_b40x25_8x8_00h  : setMode(0x00, 40, 25, 8,  8); break; //0  320x200 16gray B800
     case t_b40x25_8x14_00h : setMode(0x00, 40, 25, 8, 14); break; //0* 320x350 16gray B800
-    case t_b40x25_8x16_00h : setMode(0x00, 40, 25, 8, 16); break; //   320x400  16    B800
+    case t_b40x25_8x16_00h : setMode(0x00, 40, 25, 8, 16); break; //0m 320x400  16    B800
     case t_b40x25_9x16_00h : setMode(0x00, 40, 25, 9, 16); break; //0+ 360x400  16    B800
     case t_b40x25_8x8_01h  : setMode(0x01, 40, 25, 8,  8); break; //1  320x200  16    B800
     case t_b40x25_8x14_01h : setMode(0x01, 40, 25, 8, 14); break; //1* 320x350  16    B800
-    case t_b40x25_8x16_01h : setMode(0x01, 40, 25, 8, 16); break; //   320x400  16    B800
+    case t_b40x25_8x16_01h : setMode(0x01, 40, 25, 8, 16); break; //1m 320x400  16    B800
     case t_b40x25_9x16_01h : setMode(0x01, 40, 25, 9, 16); break; //1+ 360x400  16    B800
     case t_b80x25_8x8_02h  : setMode(0x02, 80, 25, 8,  8); break; //2  640x200 16gray B800
     case t_b80x25_8x14_02h : setMode(0x02, 80, 25, 8, 14); break; //2* 640x350 16gray B800
-    case t_b80x25_8x16_02h : setMode(0x02, 80, 25, 8, 16); break; //   640x400  16    B800
+    case t_b80x25_8x16_02h : setMode(0x02, 80, 25, 8, 16); break; //2m 640x400  16    B800
     case t_b80x25_9x16_02h : setMode(0x02, 80, 25, 9, 16); break; //2+ 720x400  16    B800
     case t_b80x25_8x8_03h  : setMode(0x03, 80, 25, 8,  8); break; //3  640x200  16    B800
     case t_b80x25_8x14_03h : setMode(0x03, 80, 25, 8, 14); break; //3* 640x350  16/64 B800
-    case t_b80x25_8x16_03h : setMode(0x03, 80, 25, 8, 16); break; //   640x400  16    B800
+    case t_b80x25_8x16_03h : setMode(0x03, 80, 25, 8, 16); break; //3m 640x400  16    B800
     case t_b80x25_9x16_03h : setMode(0x03, 80, 25, 9, 16); break; //3+ 720x400  16    B800
     case t_b80x25_9x14_07h : setMode(0x07, 80, 25, 9, 14); break; //7  720x350 mono   B000
     case t_b80x25_9x16_07h : setMode(0x07, 80, 25, 9, 16); break; //7+ 720x400 mono   B000
+    case t_t40x30_8x8  : setMode_320x240(); break; // 320x240
     case t_t80x43_8x8  : setMode(0x03, 80, 43, 8,  8); break; // 640x350
     case t_t80x50_9x8  : setMode(0x03, 80, 50, 9,  8); break; // 720x400
     case t_t80x28_9x14 : setMode(0x03, 80, 28, 9, 14); break; // 720x400
@@ -289,7 +293,7 @@ void TextScreen::moveCursor(int row, int col, uint8_t fg, uint8_t bg)
     int86(0x10, &rg, &rg);
 #endif
     
-    *(m_activeOffset + ((row * m_cols) << 1) + (col << 1) + 1) = mkTextColor(fg, bg);
+    *(m_activeOffset + (row * m_lineSize) + (col << 1) + 1) = mkTextColor(fg, bg);
 
     m_curFgColor = fg;
     m_curBgColor = bg;
@@ -303,12 +307,9 @@ void TextScreen::erasePage()
 void TextScreen::erasePage(uint8_t fg, uint8_t bg)
 {
     uint8_t color = mkTextColor(fg, bg);
-    uint8_t *ch = m_activeOffset;
+    uint16_t value = (color << 8) | ' ';
 
-    for (int i = 0; i < (m_rows * m_cols); i++) {
-        *ch++ = ' ';
-        *ch++ = color;
-    }
+    fillWord(m_activeOffset, value, pageSize() >> 1);
 
     m_curFgColor = fg;
     m_curBgColor = bg;
@@ -349,7 +350,7 @@ void TextScreen::write(int row, int col, const char *text, uint8_t fg, uint8_t b
     uint8_t color = mkTextColor(fg, bg);
     char t = *text++;
     while(t) {
-        uint8_t *ch = m_activeOffset + ((m_curRow * m_cols) << 1) + (m_curCol << 1);
+        uint8_t *ch = m_activeOffset + (m_curRow * m_lineSize) + (m_curCol << 1);
         if(t == '\n') {
             m_curRow = (m_curRow + 1) % m_rows;
             m_curCol = m_prevCol;
@@ -537,14 +538,14 @@ void setCustomFonts(int from_map, int size)
 
 void TextScreen::setMode(int bios, int cols, int rows, int boxw, int boxh)
 {
-    m_height = boxh*rows;
-    if(m_height<200) {
+    m_height = boxh * rows;
+    if(m_height <= 200) {
         m_height = 200;
         m_scanlines = 400;
-    } else if(m_height>200 && m_height<350) {
+    } else if(m_height > 200 && m_height <= 350) {
         m_height = 350;
         m_scanlines = 350;
-    } else if(m_height>350) {
+    } else if(m_height > 350) {
         m_height = 400;
         m_scanlines = 400;
     }
@@ -569,6 +570,7 @@ void TextScreen::setMode(int bios, int cols, int rows, int boxw, int boxh)
     setCustomFonts(2, boxh);
     m_cols = cols;
     m_rows = rows;
+    m_lineSize = cols * 2;
     m_boxw = boxw;
     m_boxh = boxh;
     m_modeName = buf;
@@ -662,6 +664,7 @@ void TextScreen::setMode_640x480(int boxh)
     m_activeOffset = m_textPage;
     m_cols = 80;
     m_rows = textlines;
+    m_lineSize = 160;
     m_width = 640;
     m_height = 480;
     m_scanlines = 480;
@@ -675,3 +678,62 @@ void TextScreen::setMode_640x480(int boxh)
     m_modeName = buf;
 }
 
+void TextScreen::setMode_320x240()
+{
+    // This is Tiny Demo's mode
+    // https://github.com/mills32/Tiny-Demo
+    //
+    // Line offset is 42 chars, to make things more interesting
+    
+    // set mode 1 40x25
+    setScanlines(400);
+    setBIOSMode(0x01);
+    // tweak mode to be 40x30
+    const int16_t crtc[] = {
+        CRTC_REG(0x00, CRTC_VRETRACE_END),
+        CRTC_REG(0x0D, CRTC_VTOTAL),
+        CRTC_REG(0x2E, CRTC_OVERFLOW),       // VT8=0, VDE8=1, VRS8=1, SVB8=1, LC8=0, VT9=1, VDE9=0, VRS9=0
+        CRTC_REG(0xC7, CRTC_MAX_SCANLINE),   // MSL=7, SVB9=0, LC9=1, SD=1
+        CRTC_REG(0x00, CRTC_CURSOR_START),
+        CRTC_REG(0x08, CRTC_CURSOR_END),     // Make the cursor a square (8x8)
+        CRTC_REG(0xEA, CRTC_VRETRACE_START),
+        CRTC_REG(0x8E, CRTC_VRETRACE_END),   // VREND=E, Protect=1
+        CRTC_REG(0xDF, CRTC_VDISPLAY_END),
+        CRTC_REG(0x15, CRTC_OFFSET),         // 21 words = 42 chars per line
+        CRTC_REG(0xE7, CRTC_START_VBLANK),
+        CRTC_REG(0x06, CRTC_END_VBLANK),
+        -1
+    };
+    setVGARegisters(CRTC_ADDR_COL, &crtc[0]);
+ 
+    *(uint16_t*)(BIOS_DATA_AREA(0x4C)) = 2520; // Page size in bytes
+    *(BIOS_DATA_AREA(0x84)) = 29; // Page number of lines (minus 1)
+    
+    // Select Alternate Print Screen Handler (see above)
+    union REGS rg;
+    rg.h.ah = 0x12;
+    rg.h.bl = 0x20;
+#ifdef __386__
+    int386(0x10, &rg, &rg);
+#else
+    int86(0x10, &rg, &rg);
+#endif
+    
+    setBIOSFont(0, 8);
+    setBIOSFont(1, 8);
+    setCustomFonts(2, 8);
+    
+    m_textPage = ADDR_B8000;
+    m_activeOffset = m_textPage;
+    m_cols = 40;
+    m_rows = 30;
+    m_lineSize = 42 * 2; // <----
+    m_width = 320;
+    m_height = 240;
+    m_scanlines = 480;
+    m_boxw = 8;
+    m_boxh = 8;
+    m_crtc_addr = CRTC_ADDR_COL;
+    m_isr1_addr = ISR1_ADDR_COL;
+    m_modeName = "40x30 8x8 320x240";
+}

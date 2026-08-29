@@ -71,18 +71,34 @@ Video modes available
 Name    Format   Box    Resolution
 0,1     40x25    8x8    320x200
 0*,1*   40x25    8x14   320x350
-0+,1+   40x25    9x16   320x400
+0m,1m   40x25    8x16   320x400
+0+,1+   40x25    9x16   360x400
 2,3     80x25    8x8    640x200
 2*,3*   80x25    8x14   640x350
+2m,3m   80x25    8x16   640x400
 2+,3+   80x25    9x16   720x400
 7       80x25    9x14   720x350
 7+      80x25    9x16   720x400
+        40x30    8x8    320x240
         80x43    8x8    640x350
         80x50    9x8    720x400
         80x28    9x14   720x400
         80x30    8x16   640x480 (multisync monitor only)
         80x34    8x14   640x480 (multisync monitor only)
         80x60    8x8    640x480 (multisync monitor only)
+
+* = EGA enhanced modes
+m = MCGA enhanced modes
++ = VGA enhanced modes
+
+Modes 0, 2, are identical to modes 1, 3, respectively. On the CGA
+there is a difference in these modes. In modes 0 and 2 the color burst was
+turned off (giving only shades of gray) but color burst is not provided by the
+VGA.
+Mode hex 3+ is the default mode with an analog color display attached to a VGA
+system. Mode 7+ is the default mode with an analog monochrome display.
+Modes 0*, 1*, 2*, and 3* emulate the support provided by the EGA.
+Modes 0m, 1m, 2m, and 3m emulates the support provided by the MCGA.
 
 BEWARE: modes 80x30, 80x34, and 80x60 require a multisync monitor and they may
         damage very old VGA only 31.5 kHz monitors.
