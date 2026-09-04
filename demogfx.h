@@ -28,5 +28,6 @@ void demoCircle();
 void demoPalette();
 void demoGfxSpitscreen();
 void demoGfxHScrolling();
+void demoGfxTestCard();
 
 #endif

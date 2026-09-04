@@ -343,11 +343,7 @@ void demoPalette()
         int h = gfx.height()/16;
         for(int y=0; y<16; y++) {
             for(int x=0; x<16; x++) {
-                if(gfx.planar()) {
-                    gfx.fillRect8(x*w, y*h, w, h, y*16+x);
-                } else {
-                    gfx.fillRect8chained(x*w, y*h, w, h, y*16+x);
-                }
+                gfx.fillRect(x*w, y*h, w, h, y*16+x);
             }
         }
     }
@@ -467,11 +463,7 @@ void demoGfxSpitscreen()
         int h = gfx.height()/16;
         for(int y=0; y<16; y++) {
             for(int x=0; x<16; x++) {
-                if(gfx.planar()) {
-                    gfx.fillRect8(x*w, y*h, w, h, y*16+x);
-                } else {
-                    gfx.fillRect8chained(x*w, y*h, w, h, y*16+x);
-                }
+                gfx.fillRect(x*w, y*h, w, h, y*16+x);
             }
         }
     }
@@ -623,5 +615,171 @@ void demoGfxHScrolling()
                 }
             }
         }
+    }
+}
+
+#include <math.h>
+#define ROUND(__V__) (floor((__V__) + 0.5))
+
+void demoGfxTestCard_drawColors(
+    int x, int y,
+    float step_x, int h,
+    int x_limit,
+    int c1, int c2)
+{
+    int w = ceil(step_x);
+    for(int color = c1; color < c2; color++) {
+        gfx.fillRect(x, y, w, h, color);
+        x += w;
+        if(x + w > x_limit) {
+            w = x_limit - x;
+        }
+    }
+}
+
+void demoGfxTestCard()
+{
+    gfx.setActivePage(0);
+    gfx.clear(gfx.color(c_black));
+    gfx.setVisiblePage(0);
+    
+    gfx.drawRectangle(0, 0, gfx.width(), gfx.height(), gfx.color(c_white));
+    
+    float half_width = gfx.width() >> 1;
+    float half_height = gfx.height() >> 1;
+    float radius;
+    if(gfx.width() >= gfx.height()) {
+        radius = half_height;
+    } else {
+        radius = half_width;
+    }
+    
+    float area_w_f = float(radius) * 1.414213;
+    
+    int area_w = ROUND(area_w_f);
+    int area_h = area_w;
+    int area_x = ROUND(half_width - (area_w_f / 2.0));
+    int area_y = ROUND(half_height - (area_w_f / 2.0));
+    
+    float step = area_w_f / 8.0;
+    int step_i = ROUND(step);
+    float half_step = step / 2.0;
+    int half_step_i = ROUND(half_step);
+    
+    float area_line_x = area_x, area_line_y = area_y;
+    for(int l = 0; l < 8; l++) {
+        gfx.drawLine(0, area_line_y, gfx.width(), area_line_y, gfx.color(c_white));
+        area_line_y += step;
+    }
+    area_line_y = area_y + area_h;
+    for(int l = 0; l < 8; l++) {
+        gfx.drawLine(area_line_x, 0, area_line_x, gfx.height(), gfx.color(c_white));
+        area_line_x += step;
+    }
+
+    gfx.fillRect(area_x, area_y+1, area_w, area_h, gfx.color(c_lgray));
+    
+    int center_area_y = area_y + ROUND(step * 4.0);
+    int colors_area_h = center_area_y - area_y;
+    
+    if(gfx.colors() == 2) {
+        int careahh = ceil(colors_area_h / 2.0);
+        gfx.fillRect(area_x, area_y, area_w / 2.0, careahh, 0);
+        gfx.fillRect(area_x+(area_w/2.0), area_y, area_w / 2.0, careahh, 1);
+        gfx.fillRect(area_x, area_y+careahh, area_w / 2.0, careahh, 1);
+        gfx.fillRect(area_x+(area_w/2.0), area_y+careahh, area_w / 2.0, careahh, 0);
+    } else if(gfx.colors() == 4) {
+        demoGfxTestCard_drawColors(
+            area_x, area_y,
+            step*2, colors_area_h+1,
+            area_x + area_w,
+            0, 4
+        );
+    } else if(gfx.colors() == 16) {
+        int y = area_y;
+        int h = ceil(step * 2.0);
+        for(int l=0; l<2; l++) {
+            demoGfxTestCard_drawColors(
+                area_x, y,
+                step, h+1,
+                area_x + area_w,
+                l*8, (l*8)+8
+            );
+            y += h;
+        }
+    } else if(gfx.colors() == 256) {
+        int y = area_y;
+        int h = ceil(half_step);
+        for(int l=0; l<8; l++) {
+            demoGfxTestCard_drawColors(
+                area_x, y,
+                half_step, h,
+                area_x + area_w,
+                l*16, (l*16)+16
+            );
+            y += h;
+        }
+    }
+    
+    {
+        int y = center_area_y;
+        const int h = ROUND(step) + 1;
+        gfx.fillRect(area_x, y, area_w, h, gfx.color(c_black));
+        char buf[10];
+        snprintf(buf, 10, "%dx%d", gfx.width(), gfx.height());
+        int w = strlen(buf) * 8;
+        const int x = int(half_width - (w / 2));
+        y = y + (h / 2) - (gfx.fontHeight() / 2);
+        gfx.drawText(x, y, gfx.color(c_white), buf);
+    }
+    
+    {
+        int x,y;
+        
+        y = area_y + ROUND(step * 5.0);
+        for(x = area_x + 1; x < half_width; x += 2) {
+            gfx.drawLine(x, y, x, y + step, gfx.color(c_black));
+        }
+        for(; y < area_y + ROUND(step * 6.0); y += 2) {
+            gfx.drawLine(x, y, x + (area_w / 2), y, gfx.color(c_black));
+        }
+        
+        y = area_y + ROUND(step * 6.0);
+        for(x = area_x + 1; x < half_width; x += 3) {
+            gfx.drawLine(x, y, x, y + step, gfx.color(c_black));
+        }
+        for(; y < area_y + ROUND(step * 7.0); y += 3) {
+            gfx.drawLine(x, y, x + (area_w / 2), y, gfx.color(c_black));
+        }
+        
+        y = area_y + ROUND(step * 7.0);
+        for(x = area_x + 1; x < half_width; x += 4) {
+            gfx.drawLine(x, y, x, y + step, gfx.color(c_black));
+        }
+        for(; y < area_y + ROUND(step * 8.0); y += 4) {
+            gfx.drawLine(x, y, x + (area_w / 2), y, gfx.color(c_black));
+        }
+    }
+    
+    
+    for(float y = area_y; y >= 0; y -= step) {
+        gfx.drawLine(0, y, gfx.width(), y, gfx.color(c_white));
+    }
+    for(float x = area_x; x >= 0; x -= step) {
+        gfx.drawLine(x, 0, x, gfx.height(), gfx.color(c_white));
+    }
+    
+    for(float y = area_line_y; y < gfx.height(); y += step) {
+        gfx.drawLine(0, y, gfx.width(), y, gfx.color(c_white));
+    }
+    for(float x = area_line_x; x < gfx.width(); x += step) {
+        gfx.drawLine(x, 0, x, gfx.height(), gfx.color(c_white));
+    }
+    
+    gfx.drawCircle(half_width, half_height, radius, gfx.color(c_white));
+
+    int k = 0;
+    while(k != k_ESC) {
+        k = getch();
     }
 }

@@ -34,7 +34,7 @@ WPP16="wpp -0 -bt=dos -zc -fpc -oeilr -mh -zq -d0"
 WCL16="wcl -0 -bcl=dos -bt=dos -lr -k32k -mh -d0 -fm"
 
 $WPP32 *.cpp data/fonts/*.cpp data/luts/*.cpp
-$WCL32 -fe=VGATEST3.EXE *.o
+$WCL32 -fe=VGATEST.EXE *.o
 rm *.o
 
 $WPP16 *.cpp data/fonts/*.cpp data/luts/*.cpp

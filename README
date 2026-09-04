@@ -4,8 +4,12 @@ Simple DOS program used to test VGA functionality in both text and graphics
 modes.
 
 It can be compiled using Open Watcom for:
- * 32-bit DOS/4G (req. 80386 CPU and DOS/4GW extender)
- * 16-bit DOS (req. 8086 CPU)
+ * 32-bit DOS/4G (80386+ CPU and DOS/4GW extender required)
+ * 16-bit DOS (8086+ CPU required)
+
+Precompiled binaries:
+ * VGATEST.EXE is the 32-bit DOS/4G version
+ * VGATEST0.EXE is the 16-bit DOS version
 
 Source code at https://github.com/barotto/VGATEST
 
@@ -108,10 +112,20 @@ BEWARE: modes 80x30, 80x34, and 80x60 require a multisync monitor and they may
 All Points Addressable (APA) tests
 --------------------------------------------------------------------------------
 
+Test card demo
+--------------
+Shows a test card made by a full screen grid with equally spaced lines, a
+centered circle, a palette, and line patterns. Useful to check the screen aspect
+ratio.
+
+Keys:
+ESC = exit
+
+
 Circles demo
 ------------
-Shows a bunch of concentric circles that rapidly change their color. Useful to
-check the screen aspect ratio.
+Shows a bunch of concentric circles that rapidly change their color.
+FPS indicator also shown.
 
 Keys:
 ESC = exit
@@ -122,6 +136,7 @@ Lines demo
 Shows two lines (green and red) that rotates in opposite directions. In video
 modes with only one available page the lines could be only partially drawn (it
 depends on how fast the CPU, bus, and VGA are).
+FPS indicator also shown.
 
 Keys:
 ESC = exit
@@ -138,6 +153,7 @@ ESC = exit
 Worms demo
 ----------
 Draws a bunch of worms that crawl on the screen.
+FPS indicator also shown.
 
 Keys:
 ESC = exit

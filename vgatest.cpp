@@ -86,7 +86,7 @@ int getHexFromKeyb(int row, int col)
 
 void putTitle()
 {
-    text(2,28)("-", c_dgray)("-", c_lgray)("-", c_white)
+    text(1,28)("-", c_dgray)("-", c_lgray)("-", c_white)
               (" VGA modes test ", c_white)
               ("-", c_white)("-", c_lgray)("-", c_dgray);
 
@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
         text.erasePage(DEFAULT_FG_COL, DEFAULT_BG_COL);
         putTitle();
 
-        text(4,33);
+        text(3,33);
         text("Text     [t]\n", DEFAULT_FG_COL);
         text("Graphics [g]\n");
         text("Options  [o]\n");
@@ -160,7 +160,7 @@ int main(int argc, char *argv[])
 
             text.erasePage(DEFAULT_FG_COL, DEFAULT_BG_COL);
             putTitle();
-            text(4,33);
+            text(3,33);
             text("Font Maps   [f]\n", DEFAULT_FG_COL);
             text("Split & Pan [s]\n");
             text("Benchmark   [b]\n");
@@ -233,8 +233,9 @@ int main(int argc, char *argv[])
 
             text.erasePage(DEFAULT_FG_COL, DEFAULT_BG_COL);
             putTitle();
-            text(4,33);
-            text("Circles     [c]\n", DEFAULT_FG_COL);
+            text(3,33);
+            text("Test card   [t]\n", DEFAULT_FG_COL);
+            text("Circles     [c]\n");
             text("Lines       [l]\n");
             text("Palette     [p]\n");
             text("Worms       [w]\n");
@@ -245,7 +246,7 @@ int main(int argc, char *argv[])
             text("Which Test?");
             text.getPos(promptrow, promptcol);
 
-            int demo = getCharFromKeyb("cClLpPwWsSrRbB", promptrow, promptcol);
+            int demo = getCharFromKeyb("cClLpPwWsSrRbBtT", promptrow, promptcol);
             if(demo == 'q') {
                 continue;
             }
@@ -310,6 +311,9 @@ int main(int argc, char *argv[])
                     break;
                 case 'r':
                     demoGfxHScrolling();
+                    break;
+                case 't':
+                    demoGfxTestCard();
                     break;
                 case 'b':
                     demoMemBench(true);

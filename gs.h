@@ -63,6 +63,7 @@ private:
     int16_t (GfxScreen::*m_getPixelFn)(int16_t x, int16_t y);
     void (GfxScreen::*m_clearFn)(int row, int lines, uint8_t color);
     void (GfxScreen::*m_drawTextFn)(int16_t x, int16_t y, uint8_t color, const char *string);
+    void (GfxScreen::*m_fillRectFn)(int16_t x, int16_t y, int16_t width, int16_t height, uint8_t color);
 
     int32_t getPageOffset(uint8_t page);
 
@@ -109,9 +110,11 @@ public:
     void drawLine(int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint8_t color);
     void drawCircle(int16_t cx, int16_t cy, int16_t r, uint8_t color);
     void drawRectangle(int16_t x, int16_t y, int16_t width, int16_t height, uint8_t color);
-    void fillRect8(int16_t x, int16_t y, int16_t width, int16_t height, uint8_t color);
-    void fillRect8chained(int16_t x, int16_t y, int16_t width, int16_t height, uint8_t color);
-
+    
+    void fillRect(int16_t x, int16_t y, int16_t width, int16_t height, uint8_t color) {
+        (*this.*m_fillRectFn)(x, y, width, height, color);
+    }
+    
     inline void drawText(int16_t x, int16_t y, uint8_t color, const char *string) {
         (*this.*m_drawTextFn)(x,y,color,string);
     }
@@ -169,6 +172,11 @@ private:
     int16_t getPixel8(int16_t x, int16_t y);
     int16_t getPixel8chained(int16_t x, int16_t y);
 
+    void fillRectAny(int16_t x, int16_t y, int16_t width, int16_t height, uint8_t color);
+    void fillRect4(int16_t x, int16_t y, int16_t width, int16_t height, uint8_t color);
+    void fillRect8(int16_t x, int16_t y, int16_t width, int16_t height, uint8_t color);
+    void fillRect8chained(int16_t x, int16_t y, int16_t width, int16_t height, uint8_t color);
+    
     void setPlanarRWMode(int rmode, int wmode);
 
     void drawChar8(int16_t x, int16_t y, uint8_t color, char c);

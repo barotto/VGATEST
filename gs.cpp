@@ -63,6 +63,7 @@ GfxScreen::GfxScreen()
     m_getPixelFn = NULL;
     m_clearFn = NULL;
     m_drawTextFn = NULL;
+    m_fillRectFn = NULL;
 }
 
 GfxScreen::~GfxScreen()
@@ -104,6 +105,13 @@ void GfxScreen::setMode(int16_t mode)
         return;
     }
 
+    if(m_height < 350) {
+        m_fontHeight = 8;
+    } else if(m_height < 480) {
+        m_fontHeight = 14;
+    } else {
+        m_fontHeight = 16;
+    }
     m_fontAddr = getFont(m_fontHeight);
     m_activeOffset = m_videoMem;
     if(inp(MOR_READ) & 1) {
@@ -144,6 +152,7 @@ void GfxScreen::resetMode()
     m_getPixelFn = NULL;
     m_clearFn = NULL;
     m_drawTextFn = NULL;
+    m_fillRectFn = NULL;
 }
 
 void GfxScreen::clear_odd_even(int row, int lines, uint8_t color)
@@ -578,6 +587,9 @@ void GfxScreen::drawText4(int16_t x, int16_t y, uint8_t color, const char *strin
     setrst |= color & 0x0f;
     outp(GCR_DATA, setrst);
 
+    // x must be multiple of 8
+    x &= 0xFFF8;
+
     while(*string) {
         drawChar4(x, y, color, *string++);
         x += 8;
@@ -586,18 +598,142 @@ void GfxScreen::drawText4(int16_t x, int16_t y, uint8_t color, const char *strin
     setPlanarRWMode(0,2);
 }
 
-int32_t middleMask[4][4] =
+void GfxScreen::fillRectAny(int16_t x, int16_t y, int16_t width, int16_t height, uint8_t color)
 {
-    {0x1, 0x3, 0x7, 0xf},
-    {0x0, 0x2, 0x6, 0xe},
-    {0x0, 0x0, 0x4, 0xc},
-    {0x0, 0x0, 0x0, 0x8},
-};
-int32_t leftMask[4] = {0xf, 0xe, 0xc, 0x8};
-int32_t rightMask[4] = {0x1, 0x3, 0x7, 0xf};
+    // fallback
+
+    int16_t x1 = x;
+    int16_t x2 = x + width - 1;
+    int16_t y1 = y;
+    int16_t y2 = y + height - 1;
+
+    if(x1 < 0) {
+        x1 = 0;
+    }
+    if(x2 > m_maxx) {
+        x2 = m_maxx;
+    }
+    if(y1 < 0) {
+        y1 = 0;
+    }
+    if (y2 > m_maxy) {
+        y2 = m_maxy;
+    }
+    if(y2 < y1 || x2 < x1) {
+        return;
+    }
+    
+    height = y2 - y1;
+    for(int h = 0; h < height; h++) {
+        drawLine(x1, y1+h, x2, y1+h, color);
+    }
+}
+
+void GfxScreen::fillRect4(int16_t x1, int16_t y1, int16_t width, int16_t height, uint8_t color)
+{
+    // this is similar to the fillRect8 algo, with bands of 8 bytes and masks.
+    // differences are the size of pixels and the way of setting them.
+    
+    if(x1<0 || y1<0 || x1>m_maxx || y1>m_maxy || width==0 || height==0) {
+        return;
+    }
+    if(x1 + width > m_width) {
+        width = m_width - x1;
+    }
+    if(y1 + height > m_height) {
+        height = m_height - y1;
+    }
+    const int x2 = x1 + width - 1;
+    const int y2 = y1 + height - 1;
+
+    static const uint8_t leftMask[8] = {0xff, 0x7f, 0x3f, 0x1f, 0x0f, 0x07, 0x03, 0x01};
+    static const uint8_t rightMask[8] = {0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff};
+    static const uint8_t middleMask[8][8] = {
+        {0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff},
+        {0x40, 0x60, 0x70, 0x78, 0x7c, 0x7e, 0x7f, 0x00},
+        {0x20, 0x30, 0x38, 0x3c, 0x3e, 0x3f, 0x00, 0x00},
+        {0x10, 0x18, 0x1c, 0x1e, 0x1f, 0x00, 0x00, 0x00},
+        {0x08, 0x0c, 0x0e, 0x0f, 0x00, 0x00, 0x00, 0x00},
+        {0x04, 0x06, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00},
+        {0x02, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+        {0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+    };
+    
+    // bands are groups of 8 pixels
+    const int leftBit  = x1 & 7;
+    const int rightBit = x2 & 7;
+    const int leftBand = x1 >> 3;
+    const int rightBand = x2 >> 3;
+    const int middleBands = rightBand - (leftBand + 1);
+    
+    setPlanarRWMode(0,0);
+
+    // data written to all planes will be replaced by the set/reset value
+    SEQ_OUT(SEQ_MAPMASK, 0x0f);
+    GCR_OUT(GCR_EN_SETRESET, 0x0f);
+    GCR_OUT(GCR_SETRESET, color);
+
+    if(leftBand == rightBand) {
+        uint8_t mask = middleMask[leftBit][rightBit];
+        GCR_OUT(GCR_BITMASK, mask);
+        uint8_t *addr = m_activeOffset + (m_lineSize * y1) + leftBand;
+        for(; y1 < y2; y1++) {
+            volatile uint8_t latches = *addr;
+            *addr = 0;
+            addr += m_lineSize;
+        }
+    } else {
+        uint8_t *top = m_activeOffset + (m_lineSize * y1);
+        uint8_t *dest;
+        uint8_t mask;
+        
+        dest = top + leftBand;
+        mask = leftMask[leftBit];
+        GCR_OUT(GCR_BITMASK, mask);
+        for(int16_t i = y1; i < y2; i++) {
+            // we need to load the latches first
+            volatile uint8_t latches = *dest;
+            // since set/reset is enabled for all planes, the written value is ignored.
+            *dest = 0;
+           dest += m_lineSize;
+        }
+        if(middleBands) {
+            dest = top + leftBand + 1;
+            GCR_OUT(GCR_BITMASK, 0xFF);
+            for(int16_t i = y1; i < y2; i++) {
+                memset(dest, 0, middleBands);
+                dest += m_lineSize;
+            }
+        }
+        dest = top + rightBand;
+        mask = rightMask[rightBit];
+        GCR_OUT(GCR_BITMASK, mask);
+        for(int16_t i = y1; i < y2; i++) {
+            volatile uint8_t latches = *dest;
+            *dest = 0;
+           dest += m_lineSize;
+        }
+    }
+
+    // disable set/reset
+    GCR_OUT(GCR_EN_SETRESET, 0x00);
+
+    // restore putPixel's write mode 2
+    setPlanarRWMode(0,2);
+}
 
 void GfxScreen::fillRect8(int16_t x, int16_t y, int16_t width, int16_t height, uint8_t color)
 {
+    static const int32_t middleMask[4][4] =
+    {
+        {0x1, 0x3, 0x7, 0xf},
+        {0x0, 0x2, 0x6, 0xe},
+        {0x0, 0x0, 0x4, 0xc},
+        {0x0, 0x0, 0x0, 0x8},
+    };
+    static const int32_t leftMask[4] = {0xf, 0xe, 0xc, 0x8};
+    static const int32_t rightMask[4] = {0x1, 0x3, 0x7, 0xf};
+    
     int32_t x1 = x;
     int32_t x2 = x + width - 1;
     int32_t y1 = y;
@@ -885,6 +1021,7 @@ void GfxScreen::mode_b320x200_04h()
     m_getPixelFn = getPixel2;
     m_clearFn    = clear2;
     m_drawTextFn = drawText8;
+    m_fillRectFn = fillRectAny;
 
     memset(m_cval, 0, 256);
     m_cval[0] = 0;
@@ -932,6 +1069,7 @@ void GfxScreen::mode_b640x200_06h()
     m_getPixelFn = getPixel1;
     m_clearFn    = clear1;
     m_drawTextFn = drawText8;
+    m_fillRectFn = fillRectAny;
 
     memset(m_cval, 0, 256);
     m_cval[0] = 0;
@@ -976,6 +1114,7 @@ void GfxScreen::mode_b320x200_0Dh()
     m_getPixelFn = getPixel4;
     m_clearFn    = clear4;
     m_drawTextFn = drawText4;
+    m_fillRectFn = fillRect4;
 
     // put pixel needs write mode 2
     setPlanarRWMode(0,2);
@@ -1001,6 +1140,7 @@ void GfxScreen::mode_b640x200_0Eh()
     m_getPixelFn = getPixel4;
     m_clearFn    = clear4;
     m_drawTextFn = drawText4;
+    m_fillRectFn = fillRect4;
 
     // put pixel needs write mode 2
     setPlanarRWMode(0,2);
@@ -1026,6 +1166,7 @@ void GfxScreen::mode_b640x350_0Fh()
     m_getPixelFn = getPixel4;
     m_clearFn    = clear4;
     m_drawTextFn = drawText4;
+    m_fillRectFn = fillRect4;
 
     // put pixel needs write mode 2
     setPlanarRWMode(0,2);
@@ -1075,6 +1216,7 @@ void GfxScreen::mode_b640x350_10h()
     m_getPixelFn = getPixel4;
     m_clearFn = clear4;
     m_drawTextFn = drawText4;
+    m_fillRectFn = fillRect4;
 
     // put pixel needs write mode 2
     setPlanarRWMode(0,2);
@@ -1100,6 +1242,7 @@ void GfxScreen::mode_b640x480_12h()
     m_getPixelFn = getPixel4;
     m_clearFn = clear4;
     m_drawTextFn = drawText4;
+    m_fillRectFn = fillRect4;
 
     // put pixel needs write mode 2
     setPlanarRWMode(0,2);
@@ -1125,6 +1268,7 @@ void GfxScreen::mode_b320x200_13h()
     m_getPixelFn = getPixel8chained;
     m_clearFn   = clear8chained;
     m_drawTextFn = drawText8;
+    m_fillRectFn = fillRect8chained;
 
     setStdVGAColorMap();
 }
@@ -1147,6 +1291,7 @@ void GfxScreen::mode_t160x120()
     m_getPixelFn = getPixel8;
     m_clearFn = clear8;
     m_drawTextFn = drawText8;
+    m_fillRectFn = fillRect8;
 
     setStdVGAColorMap();
 
@@ -1208,6 +1353,7 @@ void GfxScreen::mode_t296x220()
     m_getPixelFn = getPixel8;
     m_clearFn    = clear8;
     m_drawTextFn = drawText8;
+    m_fillRectFn = fillRect8;
 
     setStdVGAColorMap();
 
@@ -1266,6 +1412,7 @@ void GfxScreen::mode_t256x256_Q()
     m_getPixelFn = getPixel8chained;
     m_clearFn    = clear8chained;
     m_drawTextFn = drawText8;
+    m_fillRectFn = fillRect8chained;
 
     setBIOSMode(0x13);
 
@@ -1321,6 +1468,7 @@ void GfxScreen::mode_t320x200_Y()
     m_getPixelFn = getPixel8;
     m_clearFn    = clear8;
     m_drawTextFn = drawText8;
+    m_fillRectFn = fillRect8;
 
     setStdVGAColorMap();
 
@@ -1352,6 +1500,7 @@ void GfxScreen::mode_t320x240_X()
     m_getPixelFn = getPixel8;
     m_clearFn    = clear8;
     m_drawTextFn = drawText8;
+    m_fillRectFn = fillRect8;
 
     setStdVGAColorMap();
 
@@ -1396,6 +1545,7 @@ void GfxScreen::mode_t320x400()
     m_getPixelFn = getPixel8;
     m_clearFn    = clear8;
     m_drawTextFn = drawText8;
+    m_fillRectFn = fillRect8;
 
     setStdVGAColorMap();
 
@@ -1432,6 +1582,7 @@ void GfxScreen::mode_t360x270()
     m_getPixelFn = getPixel8;
     m_clearFn    = clear8;
     m_drawTextFn = drawText8;
+    m_fillRectFn = fillRect8;
 
     setStdVGAColorMap();
 
@@ -1487,6 +1638,7 @@ void GfxScreen::mode_t360x360()
     m_getPixelFn = getPixel8;
     m_clearFn    = clear8;
     m_drawTextFn = drawText8;
+    m_fillRectFn = fillRect8;
 
     setStdVGAColorMap();
 
@@ -1542,6 +1694,7 @@ void GfxScreen::mode_t360x480()
     m_getPixelFn = getPixel8;
     m_clearFn    = clear8;
     m_drawTextFn = drawText8;
+    m_fillRectFn = fillRect8;
 
     setStdVGAColorMap();
 
@@ -1594,6 +1747,7 @@ void GfxScreen::mode_t400x300()
     m_getPixelFn = getPixel8;
     m_clearFn    = clear8;
     m_drawTextFn = drawText8;
+    m_fillRectFn = fillRect8;
 
     setStdVGAColorMap();
 
