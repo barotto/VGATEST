@@ -662,6 +662,7 @@ void demoGfxTestCard()
     int area_h = area_w;
     int area_x = ROUND(half_width - (area_w_f / 2.0));
     int area_y = ROUND(half_height - (area_w_f / 2.0));
+    int area_x2 = area_x + area_w - 1;
     
     float step = area_w_f / 8.0;
     float half_step = step / 2.0;
@@ -696,7 +697,7 @@ void demoGfxTestCard()
         demoGfxTestCard_drawColors(
             area_x, area_y,
             step*2, colors_area_h+1,
-            area_x + area_w,
+            area_x2 + 1,
             0, 4
         );
     } else if(gfx.colors() == 16) {
@@ -706,7 +707,7 @@ void demoGfxTestCard()
             demoGfxTestCard_drawColors(
                 area_x, y,
                 step, h+1,
-                area_x + area_w,
+                area_x2 + 1,
                 l*8, (l*8)+8
             );
             y += h;
@@ -719,7 +720,7 @@ void demoGfxTestCard()
             demoGfxTestCard_drawColors(
                 area_x, y,
                 half_step, h,
-                area_x + area_w,
+                area_x2 + 1,
                 l*16, (l*16)+16
             );
             y += h;
@@ -741,30 +742,41 @@ void demoGfxTestCard()
     
     {
         // Line patterns
+        const int area_half_w = ceil(area_w_f / 2.0);
+        const int x0 = area_x + area_half_w;
         int x,y;
         
+        // vertical 1
         y = area_y + ROUND(step * 5.0);
         for(x = area_x + 1; x < half_width; x += 2) {
             gfx.drawLine(x, y, x, y + step, gfx.color(c_black));
         }
+        // horizontal 1
+        x = x0;
         for(; y < area_y + ROUND(step * 6.0); y += 2) {
-            gfx.drawLine(x, y, x + (area_w / 2), y, gfx.color(c_black));
+            gfx.drawLine(x, y, area_x2, y, gfx.color(c_black));
         }
         
+        // vertical 2
         y = area_y + ROUND(step * 6.0);
         for(x = area_x + 1; x < half_width; x += 3) {
             gfx.drawLine(x, y, x, y + step, gfx.color(c_black));
         }
+        // horizontal 2
+        x = x0;
         for(; y < area_y + ROUND(step * 7.0); y += 3) {
-            gfx.drawLine(x, y, x + (area_w / 2), y, gfx.color(c_black));
+            gfx.drawLine(x, y, area_x2, y, gfx.color(c_black));
         }
         
+        // vertical 3
         y = area_y + ROUND(step * 7.0);
         for(x = area_x + 1; x < half_width; x += 4) {
             gfx.drawLine(x, y, x, y + step, gfx.color(c_black));
         }
+        // horizontal 3
+        x = x0;
         for(; y < area_y + ROUND(step * 8.0); y += 4) {
-            gfx.drawLine(x, y, x + (area_w / 2), y, gfx.color(c_black));
+            gfx.drawLine(x, y, area_x2, y, gfx.color(c_black));
         }
     }
     
