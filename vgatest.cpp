@@ -84,10 +84,12 @@ int getHexFromKeyb(int row, int col)
     return hex;
 }
 
-void putTitle()
+void putTitle(const char *title)
 {
-    text(1,28)("-", c_dgray)("-", c_lgray)("-", c_white)
-              (" VGA modes test ", c_white)
+    const int len = strlen(title) + 6;
+    const int col = text.cols() / 2 - len / 2;
+    text(1,col)("-", c_dgray)("-", c_lgray)("-", c_white)
+              (title, c_white)
               ("-", c_white)("-", c_lgray)("-", c_dgray);
 
 #ifdef __386__
@@ -108,23 +110,26 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    char demo = 0;
     uint8_t a;
     int promptrow, promptcol;
+    int mode = 0, demo = 0, vmode = 0;
 
     while(true) {
         text.erasePage(DEFAULT_FG_COL, DEFAULT_BG_COL);
-        putTitle();
+        putTitle(" VGA modes test ");
 
         text(3,33);
         text("Text     [t]\n", DEFAULT_FG_COL);
         text("Graphics [g]\n");
         text("Options  [o]\n");
+        text("Quit     [q]\n");
         text(text.getRow()+1, 33);
         text("Which Mode?");
         text.getPos(promptrow, promptcol);
 
-        int mode = getCharFromKeyb("tTgGoO", promptrow, promptcol);
+        if(!mode) {
+            mode = getCharFromKeyb("tTgGoOq", promptrow, promptcol);
+        }
         if(mode == 'q') {
             break;
         }
@@ -136,6 +141,7 @@ int main(int argc, char *argv[])
             text.getPos(promptrow, promptcol);
             int opt = getCharFromKeyb("oO", promptrow, promptcol);
             if(opt == 'q') {
+                mode = 0;
                 continue;
             }
             switch(opt) {
@@ -159,7 +165,7 @@ int main(int argc, char *argv[])
         if(mode == 't') {
 
             text.erasePage(DEFAULT_FG_COL, DEFAULT_BG_COL);
-            putTitle();
+            putTitle(" TEXT modes ");
             text(3,33);
             text("Font Maps   [f]\n", DEFAULT_FG_COL);
             text("Split & Pan [s]\n");
@@ -168,8 +174,12 @@ int main(int argc, char *argv[])
             text("Which Test?");
             text.getPos(promptrow, promptcol);
 
-            int demo = getCharFromKeyb("fFsSbB", promptrow, promptcol);
+            if(!demo) {
+                demo = getCharFromKeyb("fFsSbB", promptrow, promptcol);
+            }
             if(demo == 'q') {
+                demo = 0;
+                mode = 0;
                 continue;
             }
 
@@ -206,12 +216,12 @@ int main(int argc, char *argv[])
             text(23,50)("° = multisync monitor req.");
 
             do {
-                int mode = getHexFromKeyb(promptrow, promptcol);
-                if(mode == 0xFFFF) {
-                    demo = 'q';
+                vmode = getHexFromKeyb(promptrow, promptcol);
+                if(vmode == 0xFFFF) {
+                    demo = 0;
                     break;
                 }
-                text.setMode(mode);
+                text.setMode(vmode);
             } while(text.error());
 
             switch(demo) {
@@ -226,13 +236,15 @@ int main(int argc, char *argv[])
                     break;
             }
 
-            text.resetMode();
+            if(demo) {
+                text.resetMode();
+            }
         }
 
         if(mode == 'g') {
 
             text.erasePage(DEFAULT_FG_COL, DEFAULT_BG_COL);
-            putTitle();
+            putTitle(" GRAPHICS modes ");
             text(3,33);
             text("Test card   [t]\n", DEFAULT_FG_COL);
             text("Circles     [c]\n");
@@ -246,8 +258,12 @@ int main(int argc, char *argv[])
             text("Which Test?");
             text.getPos(promptrow, promptcol);
 
-            int demo = getCharFromKeyb("cClLpPwWsSrRbBtT", promptrow, promptcol);
+            if(!demo) {
+                demo = getCharFromKeyb("cClLpPwWsSrRbBtT", promptrow, promptcol);
+            }
             if(demo == 'q') {
+                demo = 0;
+                mode = 0;
                 continue;
             }
 
@@ -263,7 +279,7 @@ int main(int argc, char *argv[])
             text("13h 320x200 [13]\n");
 
             text(modesrow, 28)("Tweaked 256-color modes\n");
-            text("* 160x120 planar [14]\n");
+            text("° 160x120 planar [14]\n");
             text("Q 256x256 chain4 [15]\n");
             text("  296x220 planar [16]\n");
             text("Y 320x200 planar [17]\n");
@@ -274,20 +290,20 @@ int main(int argc, char *argv[])
             text("  360x270 planar [1a]\n");
             text("  360x360 planar [1b]\n");
             text("  360x480 planar [1c]\n");
-            text("* 400x300 planar [1d]\n");
+            text("° 400x300 planar [1d]\n");
 
             text(text.getRow()+3, 33);
             text("Which Mode?");
             text.getPos(promptrow, promptcol);
 
-            text(23,50)("* = multisync monitor req.");
+            text(23,50)("° = multisync monitor req.");
 
             int mode1 = -1;
             int mode2 = -1;
             do {
                 int vmode = getHexFromKeyb(promptrow, promptcol);
                 if(vmode == 0xFFFF) {
-                    demo = 'q';
+                    demo = 0;
                     break;
                 }
                 gfx.setMode(vmode);
@@ -320,7 +336,9 @@ int main(int argc, char *argv[])
                     break;
             }
 
-            gfx.resetMode();
+            if(demo) {
+                gfx.resetMode();
+            }
         }
     }
 
