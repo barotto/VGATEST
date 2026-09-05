@@ -643,8 +643,10 @@ void demoGfxTestCard()
     gfx.clear(gfx.color(c_black));
     gfx.setVisiblePage(0);
     
+    // Screen frame
     gfx.drawRectangle(0, 0, gfx.width(), gfx.height(), gfx.color(c_white));
     
+    // Geometry
     float half_width = gfx.width() >> 1;
     float half_height = gfx.height() >> 1;
     float radius;
@@ -662,11 +664,11 @@ void demoGfxTestCard()
     int area_y = ROUND(half_height - (area_w_f / 2.0));
     
     float step = area_w_f / 8.0;
-    int step_i = ROUND(step);
     float half_step = step / 2.0;
-    int half_step_i = ROUND(half_step);
     
-    float area_line_x = area_x, area_line_y = area_y;
+    // Grid lines (partial)
+    float area_line_x = area_x;
+    float area_line_y = area_y;
     for(int l = 0; l < 8; l++) {
         gfx.drawLine(0, area_line_y, gfx.width(), area_line_y, gfx.color(c_white));
         area_line_y += step;
@@ -677,11 +679,13 @@ void demoGfxTestCard()
         area_line_x += step;
     }
 
+    // Main center area background
     gfx.fillRect(area_x, area_y+1, area_w, area_h, gfx.color(c_lgray));
     
     int center_area_y = area_y + ROUND(step * 4.0);
     int colors_area_h = center_area_y - area_y;
     
+    // Palette
     if(gfx.colors() == 2) {
         int careahh = ceil(colors_area_h / 2.0);
         gfx.fillRect(area_x, area_y, area_w / 2.0, careahh, 0);
@@ -708,6 +712,7 @@ void demoGfxTestCard()
             y += h;
         }
     } else if(gfx.colors() == 256) {
+        // partial palette
         int y = area_y;
         int h = ceil(half_step);
         for(int l=0; l<8; l++) {
@@ -722,6 +727,7 @@ void demoGfxTestCard()
     }
     
     {
+        // Black area with text
         int y = center_area_y;
         const int h = ROUND(step) + 1;
         gfx.fillRect(area_x, y, area_w, h, gfx.color(c_black));
@@ -734,6 +740,7 @@ void demoGfxTestCard()
     }
     
     {
+        // Line patterns
         int x,y;
         
         y = area_y + ROUND(step * 5.0);
@@ -761,7 +768,7 @@ void demoGfxTestCard()
         }
     }
     
-    
+    // Other grid lines
     for(float y = area_y; y >= 0; y -= step) {
         gfx.drawLine(0, y, gfx.width(), y, gfx.color(c_white));
     }
@@ -776,6 +783,7 @@ void demoGfxTestCard()
         gfx.drawLine(x, 0, x, gfx.height(), gfx.color(c_white));
     }
     
+    // The circle
     gfx.drawCircle(half_width, half_height, radius, gfx.color(c_white));
 
     int k = 0;

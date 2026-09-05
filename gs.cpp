@@ -665,13 +665,6 @@ void GfxScreen::fillRect4(int16_t x1, int16_t y1, int16_t width, int16_t height,
     const int leftBand = x1 >> 3;
     const int rightBand = x2 >> 3;
     const int middleBands = rightBand - (leftBand + 1);
-    
-    setPlanarRWMode(0,0);
-
-    // data written to all planes will be replaced by the set/reset value
-    SEQ_OUT(SEQ_MAPMASK, 0x0f);
-    GCR_OUT(GCR_EN_SETRESET, 0x0f);
-    GCR_OUT(GCR_SETRESET, color);
 
     if(leftBand == rightBand) {
         uint8_t mask = middleMask[leftBit][rightBit];
@@ -679,7 +672,7 @@ void GfxScreen::fillRect4(int16_t x1, int16_t y1, int16_t width, int16_t height,
         uint8_t *addr = m_activeOffset + (m_lineSize * y1) + leftBand;
         for(; y1 < y2; y1++) {
             volatile uint8_t latches = *addr;
-            *addr = 0;
+            *addr = color;
             addr += m_lineSize;
         }
     } else {
@@ -693,15 +686,14 @@ void GfxScreen::fillRect4(int16_t x1, int16_t y1, int16_t width, int16_t height,
         for(int16_t i = y1; i < y2; i++) {
             // we need to load the latches first
             volatile uint8_t latches = *dest;
-            // since set/reset is enabled for all planes, the written value is ignored.
-            *dest = 0;
+            *dest = color;
            dest += m_lineSize;
         }
         if(middleBands) {
             dest = top + leftBand + 1;
             GCR_OUT(GCR_BITMASK, 0xFF);
             for(int16_t i = y1; i < y2; i++) {
-                memset(dest, 0, middleBands);
+                memset(dest, color, middleBands);
                 dest += m_lineSize;
             }
         }
@@ -710,16 +702,10 @@ void GfxScreen::fillRect4(int16_t x1, int16_t y1, int16_t width, int16_t height,
         GCR_OUT(GCR_BITMASK, mask);
         for(int16_t i = y1; i < y2; i++) {
             volatile uint8_t latches = *dest;
-            *dest = 0;
+            *dest = color;
            dest += m_lineSize;
         }
     }
-
-    // disable set/reset
-    GCR_OUT(GCR_EN_SETRESET, 0x00);
-
-    // restore putPixel's write mode 2
-    setPlanarRWMode(0,2);
 }
 
 void GfxScreen::fillRect8(int16_t x, int16_t y, int16_t width, int16_t height, uint8_t color)
